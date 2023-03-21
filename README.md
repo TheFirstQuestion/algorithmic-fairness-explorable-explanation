@@ -52,10 +52,15 @@ Feel free to do any of the following:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+## Sources
+
+- [ProPublica's article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing), [methodology write-up](https://www.propublica.org/article/how-we-analyzed-the-compas-recidivism-algorithm), and [GitHub](https://github.com/propublica/compas-analysis)
+
 ## Acknowledgements <a name="acknowledgements"></a>
 
 - Content is adapted from [Stanford's CS 182: Ethics, Public Policy, and Technological Change](https://web.stanford.edu/class/cs182/)
 - Inspired by [Nicky Case](https://ncase.me/)
 - Created for [Stanford's CS 448B: Data Visualization](https://cs448b.subramonyam.com/), Winter 2023
+- The original data was in CSV format and was converted to JSON using [Flatfile's csvjson.com](https://csvjson.com/csv2json)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
