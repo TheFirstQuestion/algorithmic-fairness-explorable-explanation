@@ -8,7 +8,7 @@ const CHART_HEIGHT = (window.screen.height - 300) / 2;
 const RISK_SCORE_RANGE = "datum.decile_score > 0 & datum.decile_score <= 10";
 /* ############################################################### */
 
-// Runs when the page (ad libraries) are loaded
+// Runs when the page (and libraries) are loaded
 window.onload = () => {
 	// Source: https://observablehq.com/@vega/vega-lite-api#standalone_use
 	const options = {
@@ -22,61 +22,64 @@ window.onload = () => {
 	// Read in the data
 	getJSONdata((ogData) => {
 		// Sample the data
-		data = getRandomSubarray(ogData, SAMPLE_SIZE);
+		const data = getRandomSubarray(ogData, SAMPLE_SIZE);
 
 		// Add eventListeners for interactive inputs
 		document
 			.getElementById("antiClassification2select")
 			.addEventListener("input", (e) => {
-				let yesFilterStr = `datum.sex == "${e.target.value}"`;
-				let noFilterStr = `datum.sex != "${e.target.value}"`;
-				console.log(yesFilterStr);
-				console.log(noFilterStr);
-				riskScoreFrequencyFiltered(data, "antiClassification2a", yesFilterStr);
-				riskScoreFrequencyFiltered(data, "antiClassification2b", noFilterStr);
+				// Remove existing charts
+				const list = document.getElementById("antiClassification2");
+				while (list.hasChildNodes()) {
+					list.removeChild(list.firstChild);
+				}
+
+				// Generate the new charts, one for each possible value
+				const key = e.target.value;
+				const options = getValueOptions(data, key);
+				// TODO: all of these should have the same axes (% of that group) and legends -- small multiples in vega-lite
+				// TODO: add titles, adjust width to number of facets
+				options.forEach((option) => {
+					let filterStr = `datum.${key} == "${option}"`;
+					riskScoreFrequencyFiltered(data, "antiClassification2", filterStr);
+				});
+				// riskScoreFrequencyFilteredMultiples(data, "antiClassification2", key);
 			});
 
-		// Make graphs
+		// Make initial graphs
+		// TODO: add line of best fit to this
 		riskScoreFrequency(data, "antiClassification1");
-		riskScoreFrequency(data, "antiClassification2a");
-		riskScoreFrequency(data, "antiClassification2b");
 	});
 };
 
 //* ########################### Anti-Classification Section ########################## */
 function riskScoreFrequency(data, id) {
-	// Jitter: https://vega.github.io/vega-lite/examples/point_offset_random.html
-	// Problem: xOffset apparently doesn't exist on vl
-	const points = vl
-		.markPoint()
-		.data(data)
-		.transform(
-			vl.window(vl.row_number().as("index")).groupby("decile_score"),
-			// vl.calculate(Math.random() * 10).as("jitter"),
-			vl.filter(RISK_SCORE_RANGE)
-		)
-		.encode(
-			vl.x().fieldO("decile_score").axis({
-				title: "Risk Score",
-				titleAnchor: "center",
-				labelAngle: 0,
-			}),
-			vl.xOffset().fieldQ("age"),
-			vl.y().fieldO("index").axis(null).sort("descending"),
-			vl.color().fieldN("race"),
-			vl.fillOpacity().fieldQ("age")
-		);
+	const points = vl.markPoint().encode(
+		vl.x().fieldO("decile_score").axis({
+			title: "Risk Score",
+			titleAnchor: "center",
+			labelAngle: 0,
+		}),
+		vl.xOffset().fieldQ("age"),
+		vl.y().fieldO("index").axis(null).sort("descending"),
+		vl.color().fieldN("race")
+	);
 
 	const rectangles = vl
 		.markRect({ stroke: "black", fill: "transparent" })
-		.data(data)
-		.transform(vl.filter(RISK_SCORE_RANGE))
 		.encode(
 			vl.x().fieldO("decile_score"),
 			vl.y().count().axis({ title: "Number of People" })
 		);
 
 	vl.layer(points, rectangles)
+		.data(data)
+		.transform(
+			vl.window(vl.row_number().as("index")).groupby("decile_score"),
+			// TODO: fix jitter: https://vega.github.io/vega-lite/examples/point_offset_random.html
+			// vl.calculate(Math.random() * 10).as("jitter"),
+			vl.filter(RISK_SCORE_RANGE)
+		)
 		.width(CHART_WIDTH)
 		.height(CHART_HEIGHT)
 		.render()
@@ -86,15 +89,64 @@ function riskScoreFrequency(data, id) {
 }
 
 function riskScoreFrequencyFiltered(data, id, filterStr) {
-	let wholeFilterStr = `${filterStr} & ${RISK_SCORE_RANGE}`;
+	const points = vl.markPoint().encode(
+		vl.x().fieldO("decile_score").axis({
+			title: "Risk Score",
+			titleAnchor: "center",
+			labelAngle: 0,
+		}),
+		vl.y().fieldO("index").axis(null).sort("descending"),
+		vl.color().fieldN("race"),
+		vl.xOffset().fieldQ("age")
+	);
 
+	const rectangles = vl
+		.markRect({ stroke: "black", fill: "transparent" })
+		.encode(
+			vl.x().fieldO("decile_score"),
+			vl.y().count().axis({ title: "Number of People" })
+		);
+
+	vl.layer(points, rectangles)
+		.data(data)
+		.transform(
+			vl.window(vl.row_number().as("index")).groupby("decile_score"),
+			vl.filter(`${filterStr} & ${RISK_SCORE_RANGE}`)
+		)
+		.width(CHART_WIDTH)
+		.height(CHART_HEIGHT)
+		.render()
+		.then((viewElement) => {
+			const wrapper = document.createElement("div");
+			wrapper.classList.add("chartWrapper");
+			document.getElementById(id).appendChild(wrapper).appendChild(viewElement);
+		});
+}
+
+// Running into bug making small multiples: https://github.com/vega/vega-lite/issues/4373
+function riskScoreFrequencyFilteredMultiples(data, id, key) {
 	const points = vl
 		.markPoint()
 		.data(data)
 		.transform(
 			vl.window(vl.row_number().as("index")).groupby("decile_score"),
-			// vl.calculate(Math.random() * 10).as("jitter"),
-			vl.filter(wholeFilterStr)
+			vl.filter(RISK_SCORE_RANGE)
+		)
+		.encode(
+			vl.x().fieldO("decile_score"),
+			vl.xOffset().fieldQ("age"),
+			vl.y().fieldO("index").axis(null).sort("descending"),
+			vl.color().fieldN("race")
+		);
+
+	const d = [...data];
+
+	const rectangles = vl
+		.markRect({ stroke: "black", fill: "transparent" })
+		.data(data)
+		.transform(
+			vl.window(vl.row_number().as("index")).groupby("decile_score"),
+			vl.filter(RISK_SCORE_RANGE)
 		)
 		.encode(
 			vl.x().fieldO("decile_score").axis({
@@ -102,32 +154,29 @@ function riskScoreFrequencyFiltered(data, id, filterStr) {
 				titleAnchor: "center",
 				labelAngle: 0,
 			}),
-			vl.xOffset().fieldQ("age"),
-			vl.y().fieldO("index").axis(null).sort("descending"),
-			vl.color().fieldN("race"),
-			vl.fillOpacity().fieldQ("age")
-		);
-
-	const rectangles = vl
-		.markRect({ stroke: "black", fill: "transparent" })
-		.data(data)
-		.transform(vl.filter(wholeFilterStr))
-		.encode(
-			vl.x().fieldO("decile_score"),
 			vl.y().count().axis({ title: "Number of People" })
 		);
 
 	vl.layer(points, rectangles)
+		// rectangles
+		// .facet({ column: vl.field(key) })
+
 		.width(CHART_WIDTH)
 		.height(CHART_HEIGHT)
 		.render()
 		.then((viewElement) => {
-			let wrapper = document.getElementById(id);
-			wrapper.replaceChild(viewElement, wrapper.firstChild);
+			const wrapper = document.createElement("div");
+			wrapper.classList.add("chartWrapper");
+			document.getElementById(id).appendChild(wrapper).appendChild(viewElement);
 		});
 }
 
 /* ########################### Helper Functions ########################## */
+function getValueOptions(data, key) {
+	const optionsSet = new Set();
+	data.map((obj) => optionsSet.add(obj[key]));
+	return [...optionsSet];
+}
 
 // Source: https://stackoverflow.com/a/34579496
 function getJSONdata(callback) {
