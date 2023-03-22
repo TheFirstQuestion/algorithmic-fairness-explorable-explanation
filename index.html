@@ -3,15 +3,31 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<script src="./libraries/vega5.js"></script>
-		<script src="./libraries/vega-lite4.js"></script>
-		<script src="./libraries/vega-lite-api4.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vega-lite-api@5.6.0"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vega-tooltip"></script>
 		<!-- Auto-reloads the page on edit -->
 		<script type="text/javascript" src="https://livejs.com/live.js"></script>
 		<!-- My files -->
 		<script src="./main.js"></script>
+		<link rel="stylesheet" type="text/css" href="style.css" />
 	</head>
+
 	<body>
-		<div id="view"></div>
+		<h1>Anti-Classification</h1>
+		<div class="container">
+			<div class="chartWrapper" id="antiClassification1"></div>
+		</div>
+
+		<select name="antiClassification2select" id="antiClassification2select">
+			<option value="Male">Male</option>
+			<option value="Female">Female</option>
+		</select>
+
+		<div class="container">
+			<div class="chartWrapper" id="antiClassification2a"></div>
+			<div class="chartWrapper" id="antiClassification2b"></div>
+		</div>
 	</body>
 </html>

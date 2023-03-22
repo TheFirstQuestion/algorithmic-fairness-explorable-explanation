@@ -1,0 +1,11 @@
+.container {
+	display: flex;
+	width: 98vw;
+	justify-content: space-evenly;
+	border: 1px solid cyan;
+}
+
+.chartWrapper {
+	display: inline-block;
+	border: 1px solid red;
+}
