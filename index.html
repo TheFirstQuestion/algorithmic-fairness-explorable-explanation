@@ -7,25 +7,147 @@
 		<script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
 		<script src="https://cdn.jsdelivr.net/npm/vega-lite-api@5.6.0"></script>
 		<script src="https://cdn.jsdelivr.net/npm/vega-tooltip"></script>
+
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
+		<script src="https://cdn.jsdelivr.net/npm/d3-quadtree@3"></script>
+		<script src="https://cdn.jsdelivr.net/npm/d3-timer@3"></script>
+		<script src="https://cdn.jsdelivr.net/npm/d3-force@3"></script>
+		<!-- Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Fredericka+the+Great&family=Patrick+Hand&family=Patrick+Hand+SC&family=Sue+Ellen+Francisco&display=swap"
+			rel="stylesheet"
+		/>
 		<!-- Auto-reloads the page on edit -->
 		<script type="text/javascript" src="https://livejs.com/live.js"></script>
 		<!-- My files -->
 		<script src="./main.js"></script>
 		<link rel="stylesheet" type="text/css" href="style.css" />
+		<title>Algorithmic Fairness: An Explorable Explanation</title>
 	</head>
 
 	<body>
-		<h1>Anti-Classification</h1>
-		<div class="container">
-			<div class="chartWrapper" id="antiClassification1"></div>
-		</div>
+		<!-- <ul>
+			<a href="#anti_classification">Anti-Classification</a>
+			<a href="#confusion_matrix">Confusion Matrix</a>
+			<a href="#inframarginality">Infra-Marginality</a>
+		</ul>
+		<hr /> -->
 
-		<select name="antiClassification2select" id="antiClassification2select">
-			<option value="xxxxx">something else</option>
-			<option value="sex">Sex</option>
-			<option value="age_cat">Age</option>
-		</select>
+		<section class="sectionHeader" id="introHeader">
+			<h1>Algorithmic Fairness</h1>
+			<h2>An Explorable Explanation</h2>
+			<a name="introduction"></a>
+		</section>
 
-		<div class="container" id="antiClassification2"></div>
+		<section>
+			<p>
+				AI is taking over the world. And that's pretty cool, because machines
+				are completely impartial, which means that they must be super fair...
+				right?
+			</p>
+
+			<p>
+				Wrong. AI learns patterns and applies them. And
+				<strong
+					>if the patterns it learns are unfair or biased, then the AI will be
+					unfair and biased</strong
+				>, too.
+			</p>
+
+			<p>
+				AI is really complicated, so it's hard to tell when it's being unfair.
+				But we can look at the patterns it produces and see if there are any
+				trends we don't like.
+			</p>
+
+			<p>Let's look at a real example.</p>
+		</section>
+
+		<section class="sectionHeader">
+			<h1>Predicting Recidivism</h1>
+			<a name="predicting_recidivism"></a>
+		</section>
+
+		<section>
+			<!-- <p>
+				In our society, when people commit crimes, they go to jail, so that we
+				can prevent them from committing more crimes in the future.
+			</p> -->
+
+			<p>
+				If Alice is suspected of committing a crime, she'll be put on trial. To
+				make sure that she'll show up for her trial and accept the ruling, the
+				government will keep her in jail until the trial.
+			</p>
+
+			<p>
+				It's expensive to keep people in jail, though, so the US has a process
+				called bail. Alice can give the government money to hold on to until her
+				trial. She's betting that she will attend: if she comes to the trial,
+				she gets the money back, but if she skips town, she loses the money.
+			</p>
+
+			<p>
+				Importantly, the government should only take this bet if they're
+				confident Alice won't harm society while she's free. If she's a
+				supervillainess, keeping her in jail until her trial is the safest thing
+				to do. If she just made a one-time mistake, though, it's just as safe to
+				let her go - and cheaper for the government.
+			</p>
+
+			<p>
+				So,
+				<strong
+					>we want a way to predict if a person is going to commit more
+					crimes</strong
+				>. This is called <em>recidivism</em>. There are a lot of factors we
+				could use to predict recidivism: if they've skipped town before, or how
+				many other crimes they've committed.
+			</p>
+		</section>
+
+		<section class="sectionHeader">
+			<h1>Anti-Classification</h1>
+			<a name="anti_classification"></a>
+		</section>
+
+		<section>
+			<div class="container">
+				<div class="chartWrapper" id="antiClassification1"></div>
+			</div>
+
+			<select name="antiClassification2select" id="antiClassification2select">
+				<option value="xxxxx">something else</option>
+				<option value="sex">Sex</option>
+				<option value="age_cat">Age</option>
+			</select>
+
+			<div class="container" id="antiClassification2"></div>
+		</section>
+
+		<section class="sectionHeader">
+			<h1>Confusion Matrix</h1>
+			<a name="confusion_matrix"></a>
+		</section>
+
+		<section>
+			<div class="container">
+				<div class="chartWrapper" id="confusionMatrix"></div>
+			</div>
+		</section>
+
+		<section class="sectionHeader">
+			<h1>Infra-Marginality</h1>
+			<a name="inframarginality"></a>
+		</section>
+
+		<section>
+			<div class="container">
+				<div class="chartWrapper" id="inframarginality"></div>
+			</div>
+		</section>
 	</body>
 </html>

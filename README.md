@@ -55,6 +55,7 @@ Feel free to do any of the following:
 ## Sources
 
 - [ProPublica's article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing), [methodology write-up](https://www.propublica.org/article/how-we-analyzed-the-compas-recidivism-algorithm), and [GitHub](https://github.com/propublica/compas-analysis)
+- [MIT Technology Review's visualization](https://www.technologyreview.com/2019/10/17/75285/ai-fairer-than-judge-criminal-risk-assessment-algorithm/)
 
 ## Acknowledgements <a name="acknowledgements"></a>
 

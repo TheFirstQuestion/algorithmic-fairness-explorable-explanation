@@ -1,11 +1,62 @@
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	font-family: "Patrick Hand";
+	font-size: large;
+}
+
 .container {
 	display: flex;
-	width: 98vw;
+	width: 100%;
 	justify-content: space-evenly;
-	border: 1px solid cyan;
+	/* border: 1px solid cyan; */
 }
 
 .chartWrapper {
 	display: inline-block;
-	border: 1px solid red;
+	/* border: 1px solid red; */
+}
+
+section {
+	margin: 0;
+	background-size: cover;
+	min-height: 200px;
+}
+
+section:nth-child(even) {
+	padding: 2em;
+}
+
+.sectionHeader {
+	background-color: #e4c5e4;
+	padding: 2em;
+	text-align: center;
+}
+
+.sectionHeader h1 {
+	font-size: 8em;
+	font-family: "Patrick Hand SC";
+	font-weight: 700;
+	margin: 0;
+}
+
+.sectionHeader h2 {
+	font-size: 3em;
+	font-family: "Patrick Hand SC";
+	font-weight: 300;
+	font-style: italic;
+	color: #333;
+	margin: 0;
+}
+
+#introHeader > h1,
+#introHeader > h2 {
+	line-height: 1;
+}
+
+p {
+	font-size: 2em;
+	padding-left: 2em;
+	padding-right: 2em;
 }
