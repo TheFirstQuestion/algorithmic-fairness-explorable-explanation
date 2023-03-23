@@ -20,7 +20,6 @@ select {
 
 .chartWrapper {
 	display: inline-block;
-	/* border: 1px solid red; */
 }
 
 section {
@@ -76,4 +75,15 @@ svg {
 .vocabWord {
 	font-style: italic;
 	color: #b412e1;
+}
+
+.vizInstructions {
+	padding: 1em;
+	background-color: rgb(218, 218, 218);
+	margin-left: 8em;
+	margin-right: 8em;
+	margin-top: 4em;
+	margin-bottom: 3em;
+	font-size: 0.85em;
+	font-style: italic;
 }

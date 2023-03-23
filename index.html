@@ -115,8 +115,9 @@
 			<p>
 				We can use an algorithm to make a more objective evaluation: we can
 				ensure it doesn't see Alice's race or gender, we can provide consistent
-				weights for factors, and the algorithm will never be hungry. That's what
-				they did in Broward County, Florida, in 2013.
+				weights for factors, and the algorithm will never be hungry. In 2013,
+				Broward County, Florida, introduced an algorithm called COMPAS to
+				estimate "risk scores."
 				<strong>How fair was their algorithm?</strong>
 			</p>
 		</section>
@@ -128,9 +129,59 @@
 
 		<section>
 			<p>
-				Here I will introduce
-				<span class="vocabWord">protected characteristics.</span>
+				Both humans and computers will use information about Alice to predict if
+				she will recidivate or not. This might make sense for some information
+				(someone who's had many prior crimes may be more likely to commit future
+				crimes), but less sense for others (it's probably irrelevant that their
+				name begins with a vowel).
 			</p>
+
+			<p>
+				It feels like there are some pieces of information about Alice that we
+				<em>don't</em> want to use to make this prediction, for the sake of
+				fairness. Justice is blind, after all; it is wrong (and also illegal)
+				for people to be jailed on the basis of their sex or race or other
+				things beyond their control.
+			</p>
+
+			<p>
+				In the legal system, this kind of information is called a
+				<span class="vocabWord">protected characteristic</span>. Generally,
+				protected characteristics include things like race, sex, age, disability
+				status, marital status, religion, and sexual orientation.
+			</p>
+
+			<p>
+				COMPAS, the algorithm used in Florida, did not include race in its risk
+				score calculations.
+				<strong
+					>If COMPAS is not racially biased, then we shouldn't see vastly
+					different outcomes for people of different races</strong
+				>.
+			</p>
+
+			<p>
+				Let's take two people, Bob and Carina. Bob and Carina have identical
+				criminal records and are accused of committing the exact same crime. The
+				only difference between them is their race. If their race isn't taken
+				into account, then they should receive the same risk score. But that's
+				not what happens with COMPAS.
+			</p>
+
+			<div class="vizInstructions">
+				<p>
+					In the chart below, every dot represents a person who was evaluated by
+					COMPAS. You can use the dropdown to group people based on a
+					characteristic, and compare the distribution of scores for the
+					different groups.
+				</p>
+				<p>
+					Some of these characteristics are probably helpful for predicting
+					recidivism. Some are probably not. With relevant characteristics, how
+					similar are the groups? With irrelevant characteristics? What about
+					protected characteristics?
+				</p>
+			</div>
 
 			<div class="container">
 				<div class="chartWrapper" id="antiClassification1"></div>
@@ -143,6 +194,72 @@
 			</select>
 
 			<div class="container" id="antiClassification2"></div>
+
+			<p>
+				What we can see here is that different races are receiving very
+				different risk scores:
+				<strong
+					>Black individuals tend to receive high risk scores, while white
+					individuals tend to receive lower risk scores.</strong
+				>
+			</p>
+
+			<p>
+				That doesn't seem very fair! Irrelevant groupings (like "name begins
+				with vowel") have roughly the same distribution of risk scores, but
+				grouping by race paints a very different picture. What's up with that??
+			</p>
+		</section>
+
+		<section class="sectionHeader">
+			<h1>Calibration</h1>
+			<a name="calibration"></a>
+		</section>
+
+		<section>
+			<p>
+				Mathematically speaking, groupings by characteristic should have roughly
+				the same distribution as the ungrouped whole,
+				<em
+					>unless the groups are based on a characteristic that affects the risk
+					score</em
+				>. But COMPAS doesn't know the person's race!
+			</p>
+
+			<p>
+				We can conclude, then, that race must affect the risk score, which means
+				that race affects an individual's likelihood of recidivism. And
+				recidivism, remember, is being measured here as being charged with a new
+				crime. The systemic racism of the American criminal justice system means
+				that Black individuals are charged with crimes at higher rates than
+				white individuals. Because the bias of who gets evaluated by the
+				algorithm,
+				<strong
+					>even if the system is fair, we shouldn't expect to see matching
+					distributions of risk scores</strong
+				>. What's a better way to see if COMPAS is fair?
+			</p>
+
+			<p>
+				Even if the specific outcomes are different for different groups, we can
+				look at how often the algorithm is right or wrong.
+				<strong
+					>We want risk scores to predict recidivism equally well for all
+					groups</strong
+				>. The score are designed so that a 1 corresponds to 10% chance of
+				recidivating, at 2 to 20%, and so on.
+			</p>
+
+			<p>
+				In a fair system, if Daphne and Ed have the same risk score, they should
+				have the same likelihood of recidivating, no matter what their race is.
+			</p>
+
+			<div class="vizInstructions">
+				<p>something here about accuracy idk</p>
+			</div>
+
+			<h1>INSERT VISUALIZATION HERE</h1>
 		</section>
 
 		<section class="sectionHeader">
@@ -151,7 +268,26 @@
 		</section>
 
 		<section>
+			<p>Well, those lines are pretty darn close. Great, we solved it!</p>
+			<p>Or did we? Let's see how COMPAS plays out.</p>
+
+			<div class="vizInstructions">
+				<p>
+					Sometimes the algorithm is right, and jails those who would have
+					recidivated. But it also sometimes jails those who wouldn't have. We
+					want the risk scores to predict recidivism equally well: the same
+					proportion of people <em>predicted</em> to not recidivate who
+					<em>actually</em> don't recidivate should be the same across groups.
+				</p>
+
+				<p>
+					How many people are being wrongly kept in jail? How many people are
+					out on bail and commit another crime?
+				</p>
+			</div>
+
 			<div class="container">
+				<!-- TODO: set this to trigger only when scrolled into view -->
 				<select name="confusionMatrixSelect" id="confusionMatrixSelect">
 					<option value="all">All</option>
 					<option value="sex">Sex</option>
@@ -160,6 +296,14 @@
 			</div>
 
 			<div class="container" id="confusionMatrix"></div>
+
+			<p>
+				So, while COMPAS is equally (in)accurate for both groups, the
+				<em>kind</em> of mistakes it makes are different for each group.
+				Mistakes for Black individuals lead to unnecessary imprisonment, while
+				mistakes for white individuals lead to more crimes being committed.
+				What's up with that???
+			</p>
 		</section>
 
 		<section class="sectionHeader">

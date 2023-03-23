@@ -8,7 +8,6 @@ const CHART_HEIGHT = (window.screen.height - 300) / 2;
 const PERSON_RADIUS = 100;
 /* ############################################################### */
 const RISK_SCORE_RANGE = "datum.decile_score > 0 & datum.decile_score <= 10";
-const dividerThickness = 4;
 const svgWidth = 900;
 const svgHeight = 900;
 /* ############################################################### */
@@ -99,7 +98,7 @@ window.onload = () => {
 						d3
 							.select("#confusionMatrix")
 							.append("svg")
-							.attr("width", 90 / options.length + "%")
+							.attr("width", 95 / options.length + "%")
 							.attr("height", svgHeight)
 					);
 				} else {
@@ -107,7 +106,7 @@ window.onload = () => {
 						const tmp = d3
 							.select("#confusionMatrix")
 							.append("svg")
-							.attr("width", 90 / options.length + "%")
+							.attr("width", 95 / options.length + "%")
 							.attr("height", svgHeight);
 
 						clusterDots(
@@ -182,7 +181,7 @@ window.onload = () => {
 			d3
 				.select("#confusionMatrix")
 				.append("svg")
-				.attr("width", svgWidth)
+				.attr("width", "100%")
 				.attr("height", svgHeight)
 		);
 
@@ -191,7 +190,7 @@ window.onload = () => {
 			d3
 				.select("#inframarginality")
 				.append("svg")
-				.attr("width", svgWidth)
+				.attr("width", "100%")
 				.attr("height", svgHeight)
 		);
 
@@ -202,6 +201,8 @@ window.onload = () => {
 };
 
 //* ########################### Inframarginality ########################## */
+// TODO: make the bar width depend on size
+
 function makeInframarginality(data, svg) {
 	const margin = 40;
 	const axisTitleSize = 30;
@@ -210,11 +211,14 @@ function makeInframarginality(data, svg) {
 	const width = parseFloat(svg.style("width"));
 	const height = parseFloat(svg.style("height"));
 
+	const widthOfDot = 8;
+	const numDotsAcross = Math.floor(width / (10 * widthOfDot) / 2);
+
 	// X axis
 	const xScale = d3
 		.scaleLinear()
 		.domain([11, 0]) // unclear why this is in reverse order
-		.range([width - margin * 2, margin]);
+		.range([width - margin * 2 - axisTitleSize, margin]);
 
 	svg
 		.append("g")
@@ -239,7 +243,7 @@ function makeInframarginality(data, svg) {
 	// Add Y axis
 	const yScale = d3
 		.scaleLinear()
-		.domain([0, 225])
+		.domain([0, 1000 / numDotsAcross])
 		.range([height - margin, margin]);
 
 	svg
@@ -256,17 +260,13 @@ function makeInframarginality(data, svg) {
 		.append("text")
 		.attr("x", -(margin + height / 2))
 		.attr("y", axisTitleSize)
-		.attr("transform", `rotate(-90)`) // rotate it by -90 degrees
+		.attr("transform", `rotate(-90)`)
 		.attr("text-anchor", "middle")
 		.attr("font-size", axisTitleSize)
 		.text("Number of People");
 
-	// Append a vertical line to highlight the separation
+	// Add the threshold line
 	let cutoffScore = 7;
-
-	// Create an event
-	const dispatch = d3.dispatch("lineDragged");
-
 	const cutoffLine = svg
 		.append("line")
 		.attr("y1", height - margin - tickLabelSize)
@@ -282,6 +282,7 @@ function makeInframarginality(data, svg) {
 					svg.attr("cursor", "col-resize");
 				})
 				.on("drag", (event, d) => {
+					// TODO: prevent from going past 0 / 11
 					// invert = from output of scale, get risk score
 					let currLineScore = xScale.invert(event.x);
 					// If we've moved far enough on the range, then react
@@ -295,6 +296,9 @@ function makeInframarginality(data, svg) {
 				})
 		);
 
+	// Create an event
+	const dispatch = d3.dispatch("lineDragged");
+
 	// Add the people
 	// TODO: add something to indicate if recidivated or not
 	for (let i = 1; i <= 10; i++) {
@@ -306,15 +310,23 @@ function makeInframarginality(data, svg) {
 				})
 			)
 			.join("circle")
-			.attr("r", "5")
+			.attr("r", widthOfDot / 2)
 			.attr("stroke", (d) => {
 				return d.did_recidivate ? "black" : "transparent";
 			})
 			.attr("stroke-width", 1)
+			// TODO: make sure these line up with axis... make them taller than wide?
 			.attr("transform", (d, j) => {
 				return `translate(${
-					xScale(d.decile_score) - 20 + (j % 5) * 11 + margin
-				}, ${yScale(Math.floor(j / 5) * 5) - 6 - tickLabelSize})`;
+					xScale(d.decile_score) -
+					(widthOfDot * numDotsAcross) / 2 +
+					(j % numDotsAcross) * (widthOfDot + 1) +
+					margin
+				}, ${
+					yScale((Math.floor(j / numDotsAcross) * widthOfDot) / 2) -
+					6 -
+					tickLabelSize
+				})`;
 			});
 	}
 
@@ -335,9 +347,10 @@ function makeInframarginality(data, svg) {
 		.attr("font-size", axisTitleSize);
 
 	function lineHasMoved() {
+		// Line's x position
 		cutoffLine
-			.attr("x1", xScale(cutoffScore) + 6)
-			.attr("x2", xScale(cutoffScore) + 6);
+			.attr("x1", xScale(cutoffScore - 0.5) + margin)
+			.attr("x2", xScale(cutoffScore - 0.5) + margin);
 
 		let numJailed = 0;
 		let numJailedInnocent = 0;
@@ -375,20 +388,20 @@ function clusterDots(data, svg) {
 	// Center of cluster for each box in confusion matrix
 	const centers = {
 		true_positive: {
-			cx: dividerThickness + width * (1 / 4),
-			cy: dividerThickness + height * (1 / 4),
+			cx: width * (1 / 4),
+			cy: height * (1 / 4),
 		},
 		false_positive: {
-			cx: dividerThickness + width * (3 / 4),
-			cy: dividerThickness + height * (1 / 4),
+			cx: width * (3 / 4),
+			cy: height * (1 / 4),
 		},
 		false_negative: {
-			cx: dividerThickness + width * (1 / 4),
-			cy: dividerThickness + height * (3 / 4),
+			cx: width * (1 / 4),
+			cy: height * (3 / 4),
 		},
 		true_negative: {
-			cx: dividerThickness + width * (3 / 4),
-			cy: dividerThickness + height * (3 / 4),
+			cx: width * (3 / 4),
+			cy: height * (3 / 4),
 		},
 	};
 
