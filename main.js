@@ -5,12 +5,29 @@ const PATH_TO_DATA = "/data/propublica-two-years.json";
 const SAMPLE_SIZE = 1000;
 const CHART_WIDTH = window.screen.width / 3 - 200;
 const CHART_HEIGHT = (window.screen.height - 300) / 2;
+const PERSON_RADIUS = 100;
 /* ############################################################### */
 const RISK_SCORE_RANGE = "datum.decile_score > 0 & datum.decile_score <= 10";
 const dividerThickness = 4;
 const svgWidth = 900;
 const svgHeight = 900;
 /* ############################################################### */
+
+// via http://using-d3js.com/05_10_symbols.html
+var customSymbolSquare = {
+	draw: function (context, size) {
+		let s = Math.sqrt(size) / 2;
+		context.moveTo(s, s);
+		context.lineTo(s, -s);
+		context.lineTo(-s, -s);
+		context.lineTo(-s, s);
+		context.closePath();
+	},
+};
+const customSqr = d3
+	.symbol()
+	.type(customSymbolSquare)
+	.size(PERSON_RADIUS * 2);
 
 // Runs when the page (and libraries) are loaded
 window.onload = () => {
@@ -29,7 +46,7 @@ window.onload = () => {
 		ogData.map((d) => {
 			d["jail_recommended"] = d["decile_score"] >= 7 ? 1 : 0;
 			d["did_recidivate"] = d["two_year_recid"];
-			d["radius"] = 10;
+			d["radius"] = Math.sqrt(PERSON_RADIUS);
 
 			if (d.jail_recommended === 1 && d.did_recidivate === 1) {
 				d["outcome"] = "true_positive";
@@ -230,16 +247,13 @@ function clusterDots(data, svg) {
 
 	function ticked() {
 		svg
-			.selectAll("circle")
+			.selectAll("path")
 			.data(data)
 			.join((enter) => {
 				return enter
-					.append("circle")
-					.attr("cx", width / 2)
-					.attr("cy", height / 2)
-					.attr("r", (d) => {
-						return d.radius;
-					});
+					.append("path")
+					.attr("d", customSqr)
+					.attr("transform", `translate(${width / 2},${height / 2})`);
 			})
 			// Orange = predicted to recidivate
 			.attr("fill", (d) => {
@@ -260,14 +274,8 @@ function clusterDots(data, svg) {
 			.transition()
 			.ease(d3.easeCubicOut)
 			.duration(4000)
-			.attr("cx", (d) => {
-				return d.x;
-			})
-			.attr("cy", (d) => {
-				return d.y;
-			})
-			.attr("r", function (d) {
-				return d.radius;
+			.attr("transform", (d) => {
+				return `translate(${d.x},${d.y})`;
 			});
 	}
 }
