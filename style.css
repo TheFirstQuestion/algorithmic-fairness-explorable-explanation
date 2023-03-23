@@ -6,6 +6,11 @@ body {
 	font-size: large;
 }
 
+select {
+	font-size: xx-large;
+	min-width: 200px;
+}
+
 .container {
 	display: flex;
 	width: 100%;

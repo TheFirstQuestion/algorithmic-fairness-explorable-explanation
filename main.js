@@ -161,8 +161,9 @@ window.onload = () => {
 		);
 
 		/* ########################### Infra-Marginality ########################## */
-		const margin = 20;
-		const barWidth = (svgWidth - 9 * margin) / 10;
+		const margin = 40;
+		const axisTitleSize = 30;
+		const tickLabelSize = 20;
 
 		// Create the SVG
 		let infraMarginalitySVG = d3
@@ -172,29 +173,66 @@ window.onload = () => {
 			.attr("height", svgHeight);
 
 		// X axis
-		const x = d3
+		const xScale = d3
 			.scaleLinear()
-			.domain([11, 0])
+			.domain([11, 0]) // unclear why this is in reverse order
 			.range([svgWidth - margin * 2, margin]);
 
 		infraMarginalitySVG
 			.append("g")
-			.attr("transform", `translate(${margin}, ${svgHeight - margin})`)
-			.call(d3.axisBottom(x))
+			.attr(
+				"transform",
+				`translate(${margin}, ${svgHeight - tickLabelSize - margin})`
+			)
+			.call(d3.axisBottom(xScale))
 			.selectAll("text")
-			.attr("transform", "translate(3,0)rotate(0)")
+			.attr("transform", `translate(${tickLabelSize / 2 - 3},0)rotate(0)`)
+			.attr("font-size", tickLabelSize)
 			.style("text-anchor", "end");
 
+		// add x-axis title
+		infraMarginalitySVG
+			.append("text")
+			.attr("x", svgWidth / 2)
+			.attr("y", svgHeight)
+			.attr("font-size", axisTitleSize)
+			.text("Risk Score");
+
 		// Add Y axis
-		const y = d3
+		const yScale = d3
 			.scaleLinear()
-			.domain([0, 1000])
+			.domain([0, 600])
 			.range([svgHeight - margin, margin]);
+
 		infraMarginalitySVG
 			.append("g")
-			.attr("transform", `translate(${margin * 2}, 0)`)
-			.call(d3.axisLeft(y));
+			.attr("transform", `translate(${margin * 2}, ${-tickLabelSize})`)
+			.call(d3.axisLeft(yScale))
+			.selectAll("text")
+			.attr("transform", `translate(${tickLabelSize / 2 - 6},0)rotate(0)`)
+			.attr("font-size", tickLabelSize)
+			.style("text-anchor", "end");
 
+		// add y-axis title, remember that all transformations are around the (0, 0) origin
+		infraMarginalitySVG
+			.append("text")
+			.attr("x", -(margin + svgHeight / 2))
+			.attr("y", axisTitleSize)
+			.attr("transform", `rotate(-90)`) // rotate it by -90 degrees
+			.attr("text-anchor", "middle")
+			.attr("font-size", axisTitleSize)
+			.text("Number of People");
+
+		// add chart title
+		infraMarginalitySVG
+			.append("text")
+			.attr("x", svgWidth / 2 + margin)
+			.attr("y", axisTitleSize * 2 + margin)
+			.attr("text-anchor", "middle")
+			.attr("font-size", axisTitleSize * 2)
+			.text("Risk Distribution");
+
+		// Add the people
 		for (let i = 1; i <= 10; i++) {
 			infraMarginalitySVG
 				.selectAll("mycircle")
@@ -208,8 +246,8 @@ window.onload = () => {
 				.attr("stroke", "black")
 				.attr("transform", (d, j) => {
 					return `translate(${
-						x(d.decile_score) - 20 + (j % 5) * 11 + margin
-					}, ${y(Math.floor(j / 5) * 13) - 6})`;
+						xScale(d.decile_score) - 20 + (j % 5) * 11 + margin
+					}, ${yScale(Math.floor(j / 5) * 13) - 6 - tickLabelSize})`;
 				});
 		}
 
