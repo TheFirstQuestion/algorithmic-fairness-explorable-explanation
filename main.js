@@ -127,27 +127,53 @@ window.onload = () => {
 				}
 			});
 
+		// inframarginality
+		document
+			.getElementById("inframarginalitySelect")
+			.addEventListener("input", (e) => {
+				const key = e.target.value;
+				const options = getValueOptions(data, key);
+
+				// Remove existing charts
+				d3.select("#inframarginality").selectAll("svg").remove();
+
+				if (key === "all") {
+					makeInframarginality(
+						data,
+						d3
+							.select("#inframarginality")
+							.append("svg")
+							.attr("width", "100%")
+							.attr("height", svgHeight)
+					);
+				} else {
+					options.forEach((option) => {
+						const tmp = d3
+							.select("#inframarginality")
+							.append("svg")
+							.attr("width", 100 / options.length + "%")
+							.attr("height", svgHeight);
+
+						makeInframarginality(
+							data.filter((d) => {
+								return d[key] === option;
+							}),
+							tmp
+						);
+
+						tmp
+							.append("text")
+							.attr("x", 100)
+							.attr("y", 100)
+							.attr("font-size", "40px")
+							.text(option);
+					});
+				}
+			});
+
 		// Make initial graphs
 		// TODO: add line of best fit to this
 		riskScoreFrequency(data, "antiClassification1");
-
-		// // Vertical divider
-		// confusionMatrixSVG
-		// 	.append("rect")
-		// 	.attr("width", dividerThickness)
-		// 	.attr("height", svgHeight)
-		// 	.attr("x", svgWidth / 2)
-		// 	.attr("fill", "lime");
-
-		// // Horizontal divider
-		// confusionMatrixSVG
-		// 	.append("rect")
-		// 	.attr("height", dividerThickness)
-		// 	.attr("width", svgWidth)
-		// 	.attr("y", svgHeight / 2)
-		// 	.attr("fill", "lime");
-
-		// Add fields
 
 		/* ########################### Confusion Matrix ########################## */
 		// Create the SVG
@@ -160,100 +186,185 @@ window.onload = () => {
 				.attr("height", svgHeight)
 		);
 
+		makeInframarginality(
+			data,
+			d3
+				.select("#inframarginality")
+				.append("svg")
+				.attr("width", svgWidth)
+				.attr("height", svgHeight)
+		);
+
 		/* ########################### Infra-Marginality ########################## */
-		const margin = 40;
-		const axisTitleSize = 30;
-		const tickLabelSize = 20;
-
-		// Create the SVG
-		let infraMarginalitySVG = d3
-			.select("#inframarginality")
-			.append("svg")
-			.attr("width", svgWidth)
-			.attr("height", svgHeight);
-
-		// X axis
-		const xScale = d3
-			.scaleLinear()
-			.domain([11, 0]) // unclear why this is in reverse order
-			.range([svgWidth - margin * 2, margin]);
-
-		infraMarginalitySVG
-			.append("g")
-			.attr(
-				"transform",
-				`translate(${margin}, ${svgHeight - tickLabelSize - margin})`
-			)
-			.call(d3.axisBottom(xScale))
-			.selectAll("text")
-			.attr("transform", `translate(${tickLabelSize / 2 - 3},0)rotate(0)`)
-			.attr("font-size", tickLabelSize)
-			.style("text-anchor", "end");
-
-		// add x-axis title
-		infraMarginalitySVG
-			.append("text")
-			.attr("x", svgWidth / 2)
-			.attr("y", svgHeight)
-			.attr("font-size", axisTitleSize)
-			.text("Risk Score");
-
-		// Add Y axis
-		const yScale = d3
-			.scaleLinear()
-			.domain([0, 600])
-			.range([svgHeight - margin, margin]);
-
-		infraMarginalitySVG
-			.append("g")
-			.attr("transform", `translate(${margin * 2}, ${-tickLabelSize})`)
-			.call(d3.axisLeft(yScale))
-			.selectAll("text")
-			.attr("transform", `translate(${tickLabelSize / 2 - 6},0)rotate(0)`)
-			.attr("font-size", tickLabelSize)
-			.style("text-anchor", "end");
-
-		// add y-axis title, remember that all transformations are around the (0, 0) origin
-		infraMarginalitySVG
-			.append("text")
-			.attr("x", -(margin + svgHeight / 2))
-			.attr("y", axisTitleSize)
-			.attr("transform", `rotate(-90)`) // rotate it by -90 degrees
-			.attr("text-anchor", "middle")
-			.attr("font-size", axisTitleSize)
-			.text("Number of People");
-
-		// add chart title
-		infraMarginalitySVG
-			.append("text")
-			.attr("x", svgWidth / 2 + margin)
-			.attr("y", axisTitleSize * 2 + margin)
-			.attr("text-anchor", "middle")
-			.attr("font-size", axisTitleSize * 2)
-			.text("Risk Distribution");
-
-		// Add the people
-		for (let i = 1; i <= 10; i++) {
-			infraMarginalitySVG
-				.selectAll("mycircle")
-				.data(
-					data.filter((d) => {
-						return d["decile_score"] === i;
-					})
-				)
-				.join("circle")
-				.attr("r", "5")
-				.attr("stroke", "black")
-				.attr("transform", (d, j) => {
-					return `translate(${
-						xScale(d.decile_score) - 20 + (j % 5) * 11 + margin
-					}, ${yScale(Math.floor(j / 5) * 13) - 6 - tickLabelSize})`;
-				});
-		}
 
 		// End of access to data
 	});
 };
+
+//* ########################### Inframarginality ########################## */
+function makeInframarginality(data, svg) {
+	const margin = 40;
+	const axisTitleSize = 30;
+	const tickLabelSize = 20;
+
+	const width = parseFloat(svg.style("width"));
+	const height = parseFloat(svg.style("height"));
+
+	// X axis
+	const xScale = d3
+		.scaleLinear()
+		.domain([11, 0]) // unclear why this is in reverse order
+		.range([width - margin * 2, margin]);
+
+	svg
+		.append("g")
+		.attr(
+			"transform",
+			`translate(${margin}, ${height - tickLabelSize - margin})`
+		)
+		.call(d3.axisBottom(xScale))
+		.selectAll("text")
+		.attr("transform", `translate(${tickLabelSize / 2 - 3},0)rotate(0)`)
+		.attr("font-size", tickLabelSize)
+		.style("text-anchor", "end");
+
+	// add x-axis title
+	svg
+		.append("text")
+		.attr("x", width / 2)
+		.attr("y", height)
+		.attr("font-size", axisTitleSize)
+		.text("Risk Score");
+
+	// Add Y axis
+	const yScale = d3
+		.scaleLinear()
+		.domain([0, 225])
+		.range([height - margin, margin]);
+
+	svg
+		.append("g")
+		.attr("transform", `translate(${margin * 2}, ${-tickLabelSize})`)
+		.call(d3.axisLeft(yScale))
+		.selectAll("text")
+		.attr("transform", `translate(${tickLabelSize / 2 - 6},0)rotate(0)`)
+		.attr("font-size", tickLabelSize)
+		.style("text-anchor", "end");
+
+	// add y-axis title, remember that all transformations are around the (0, 0) origin
+	svg
+		.append("text")
+		.attr("x", -(margin + height / 2))
+		.attr("y", axisTitleSize)
+		.attr("transform", `rotate(-90)`) // rotate it by -90 degrees
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize)
+		.text("Number of People");
+
+	// Append a vertical line to highlight the separation
+	let cutoffScore = 7;
+
+	// Create an event
+	const dispatch = d3.dispatch("lineDragged");
+
+	const cutoffLine = svg
+		.append("line")
+		.attr("y1", height - margin - tickLabelSize)
+		.attr("y2", 0)
+		.attr("stroke", "purple")
+		.attr("stroke-width", 10)
+		.attr("opacity", 0.35)
+		.attr("cursor", "col-resize")
+		.call(
+			d3
+				.drag()
+				.on("start", () => {
+					svg.attr("cursor", "col-resize");
+				})
+				.on("drag", (event, d) => {
+					// invert = from output of scale, get risk score
+					let currLineScore = xScale.invert(event.x);
+					// If we've moved far enough on the range, then react
+					if (Math.abs(currLineScore - cutoffScore) >= 0.5) {
+						cutoffScore = Math.round(currLineScore);
+						dispatch.call("lineDragged");
+					}
+				})
+				.on("end", () => {
+					svg.attr("cursor", "default");
+				})
+		);
+
+	// Add the people
+	// TODO: add something to indicate if recidivated or not
+	for (let i = 1; i <= 10; i++) {
+		svg
+			.selectAll("mycircle")
+			.data(
+				data.filter((d) => {
+					return d["decile_score"] === i;
+				})
+			)
+			.join("circle")
+			.attr("r", "5")
+			.attr("stroke", (d) => {
+				return d.did_recidivate ? "black" : "transparent";
+			})
+			.attr("stroke-width", 1)
+			.attr("transform", (d, j) => {
+				return `translate(${
+					xScale(d.decile_score) - 20 + (j % 5) * 11 + margin
+				}, ${yScale(Math.floor(j / 5) * 5) - 6 - tickLabelSize})`;
+			});
+	}
+
+	// add chart title and subtitle
+	svg
+		.append("text")
+		.attr("x", width / 2 + margin)
+		.attr("y", axisTitleSize * 2 + margin)
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize * 2)
+		.text("Risk Distribution");
+
+	const jailedText = svg
+		.append("text")
+		.attr("x", width / 2 + margin)
+		.attr("y", axisTitleSize * 2 + 2 * margin)
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize);
+
+	function lineHasMoved() {
+		cutoffLine
+			.attr("x1", xScale(cutoffScore) + 6)
+			.attr("x2", xScale(cutoffScore) + 6);
+
+		let numJailed = 0;
+		let numJailedInnocent = 0;
+		svg.selectAll("circle").attr("fill", (d) => {
+			if (d.decile_score >= cutoffScore) {
+				// Keep track of number jailed
+				if (!d.did_recidivate) {
+					numJailedInnocent++;
+				}
+				numJailed++;
+
+				return "orange";
+			} else {
+				return "grey";
+			}
+		});
+
+		jailedText.text(
+			`Jailed Needlessly: ${
+				Math.round((numJailedInnocent / numJailed) * 100) || 0
+			}%`
+		);
+	}
+
+	lineHasMoved();
+	dispatch.on("lineDragged", lineHasMoved);
+}
 
 //* ########################### Confusion Matrix ########################## */
 function clusterDots(data, svg) {
