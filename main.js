@@ -29,6 +29,17 @@ window.onload = () => {
 		ogData.map((d) => {
 			d["jail_recommended"] = d["decile_score"] >= 7 ? 1 : 0;
 			d["did_recidivate"] = d["two_year_recid"];
+			d["radius"] = 10;
+
+			if (d.jail_recommended === 1 && d.did_recidivate === 1) {
+				d["outcome"] = "true_positive";
+			} else if (d.jail_recommended === 1 && d.did_recidivate === 0) {
+				d["outcome"] = "false_positive";
+			} else if (d.jail_recommended === 0 && d.did_recidivate === 0) {
+				d["outcome"] = "true_negative";
+			} else if (d.jail_recommended === 0 && d.did_recidivate === 1) {
+				d["outcome"] = "false_negative";
+			}
 		});
 		// Sample the data
 		const data = getRandomSubarray(ogData, SAMPLE_SIZE);
@@ -55,49 +66,82 @@ window.onload = () => {
 				// riskScoreFrequencyFilteredMultiples(data, "antiClassification2", key);
 			});
 
+		// TODO: should resample here so same number of people
+		document
+			.getElementById("confusionMatrixSelect")
+			.addEventListener("input", (e) => {
+				const key = e.target.value;
+				const options = getValueOptions(data, key);
+
+				// Remove existing charts
+				d3.select("#confusionMatrix").selectAll("svg").remove();
+
+				if (key === "all") {
+					clusterDots(
+						data,
+						d3
+							.select("#confusionMatrix")
+							.append("svg")
+							.attr("width", 90 / options.length + "%")
+							.attr("height", svgHeight)
+					);
+				} else {
+					options.forEach((option) => {
+						const tmp = d3
+							.select("#confusionMatrix")
+							.append("svg")
+							.attr("width", 90 / options.length + "%")
+							.attr("height", svgHeight);
+
+						clusterDots(
+							data.filter((d) => {
+								return d[key] === option;
+							}),
+							tmp
+						);
+
+						tmp
+							.append("text")
+							.attr("x", 100)
+							.attr("y", 100)
+							.attr("font-size", "40px")
+							.text(option);
+					});
+				}
+			});
+
 		// Make initial graphs
 		// TODO: add line of best fit to this
 		riskScoreFrequency(data, "antiClassification1");
 
-		/* ########################### Confusion Matrix ########################## */
-		// Create the SVG
-		let confusionMatrixSVG = d3
-			.select("#confusionMatrix")
-			.append("svg")
-			.attr("width", svgWidth)
-			.attr("height", svgHeight);
+		// // Vertical divider
+		// confusionMatrixSVG
+		// 	.append("rect")
+		// 	.attr("width", dividerThickness)
+		// 	.attr("height", svgHeight)
+		// 	.attr("x", svgWidth / 2)
+		// 	.attr("fill", "lime");
 
-		// Vertical divider
-		confusionMatrixSVG
-			.append("rect")
-			.attr("width", dividerThickness)
-			.attr("height", svgHeight)
-			.attr("x", svgWidth / 2)
-			.attr("fill", "lime");
-
-		// Horizontal divider
-		confusionMatrixSVG
-			.append("rect")
-			.attr("height", dividerThickness)
-			.attr("width", svgWidth)
-			.attr("y", svgHeight / 2)
-			.attr("fill", "lime");
+		// // Horizontal divider
+		// confusionMatrixSVG
+		// 	.append("rect")
+		// 	.attr("height", dividerThickness)
+		// 	.attr("width", svgWidth)
+		// 	.attr("y", svgHeight / 2)
+		// 	.attr("fill", "lime");
 
 		// Add fields
-		data.map((d) => {
-			d["radius"] = 10;
-			if (d.jail_recommended === 1 && d.did_recidivate === 1) {
-				d["outcome"] = "true_positive";
-			} else if (d.jail_recommended === 1 && d.did_recidivate === 0) {
-				d["outcome"] = "false_positive";
-			} else if (d.jail_recommended === 0 && d.did_recidivate === 0) {
-				d["outcome"] = "true_negative";
-			} else if (d.jail_recommended === 0 && d.did_recidivate === 1) {
-				d["outcome"] = "false_negative";
-			}
-		});
 
-		clusterDots(data);
+		/* ########################### Confusion Matrix ########################## */
+		// Create the SVG
+		clusterDots(
+			data,
+			d3
+				.select("#confusionMatrix")
+				.append("svg")
+				.attr("width", svgWidth)
+				.attr("height", svgHeight)
+		);
 
 		/* ########################### Infra-Marginality ########################## */
 		const margin = 20;
@@ -129,31 +173,35 @@ window.onload = () => {
 };
 
 //* ########################### Confusion Matrix ########################## */
-function clusterDots(data) {
+function clusterDots(data, svg) {
+	// via https://stackoverflow.com/a/40922248
+	const width = parseFloat(svg.style("width"));
+	const height = parseFloat(svg.style("height"));
+
 	// Center of cluster for each box in confusion matrix
 	const centers = {
 		true_positive: {
-			cx: dividerThickness + svgWidth * (1 / 4),
-			cy: dividerThickness + svgHeight * (1 / 4),
+			cx: dividerThickness + width * (1 / 4),
+			cy: dividerThickness + height * (1 / 4),
 		},
 		false_positive: {
-			cx: dividerThickness + svgWidth * (3 / 4),
-			cy: dividerThickness + svgHeight * (1 / 4),
+			cx: dividerThickness + width * (3 / 4),
+			cy: dividerThickness + height * (1 / 4),
 		},
 		false_negative: {
-			cx: dividerThickness + svgWidth * (1 / 4),
-			cy: dividerThickness + svgHeight * (3 / 4),
+			cx: dividerThickness + width * (1 / 4),
+			cy: dividerThickness + height * (3 / 4),
 		},
 		true_negative: {
-			cx: dividerThickness + svgWidth * (3 / 4),
-			cy: dividerThickness + svgHeight * (3 / 4),
+			cx: dividerThickness + width * (3 / 4),
+			cy: dividerThickness + height * (3 / 4),
 		},
 	};
 
 	// via https://www.d3indepth.com/force-layout/
 	d3.forceSimulation(data)
 		// a positive value will cause elements to attract one another while a negative value causes elements to repel each other.
-		.force("charge", d3.forceManyBody().strength(-20))
+		// .force("charge", d3.forceManyBody().strength(-1))
 		.force(
 			"x",
 			d3
@@ -181,15 +229,15 @@ function clusterDots(data) {
 		.on("tick", ticked);
 
 	function ticked() {
-		d3.select("svg")
+		svg
 			.selectAll("circle")
 			.data(data)
 			.join((enter) => {
 				return enter
 					.append("circle")
-					.attr("cx", svgWidth / 2)
-					.attr("cy", svgHeight / 2)
-					.attr("r", function (d) {
+					.attr("cx", width / 2)
+					.attr("cy", height / 2)
+					.attr("r", (d) => {
 						return d.radius;
 					});
 			})

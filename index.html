@@ -135,8 +135,14 @@
 
 		<section>
 			<div class="container">
-				<div class="chartWrapper" id="confusionMatrix"></div>
+				<select name="confusionMatrixSelect" id="confusionMatrixSelect">
+					<option value="all">All</option>
+					<option value="sex">Sex</option>
+					<option value="age_cat">Age</option>
+				</select>
 			</div>
+
+			<div class="container" id="confusionMatrix"></div>
 		</section>
 
 		<section class="sectionHeader">
