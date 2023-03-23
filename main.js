@@ -171,19 +171,47 @@ window.onload = () => {
 			.attr("width", svgWidth)
 			.attr("height", svgHeight);
 
-		// Bars
+		// X axis
+		const x = d3
+			.scaleLinear()
+			.domain([11, 0])
+			.range([svgWidth - margin * 2, margin]);
+
 		infraMarginalitySVG
-			.selectAll("rect")
-			.data(data)
-			.join("rect")
-			.attr("height", 100)
-			.attr("width", barWidth - margin)
-			.attr("x", (d) => {
-				return margin + d.decile_score * barWidth;
-			})
-			.attr("y", svgHeight - 100)
-			.attr("stroke", "black")
-			.attr("fill", "transparent");
+			.append("g")
+			.attr("transform", `translate(${margin}, ${svgHeight - margin})`)
+			.call(d3.axisBottom(x))
+			.selectAll("text")
+			.attr("transform", "translate(3,0)rotate(0)")
+			.style("text-anchor", "end");
+
+		// Add Y axis
+		const y = d3
+			.scaleLinear()
+			.domain([0, 1000])
+			.range([svgHeight - margin, margin]);
+		infraMarginalitySVG
+			.append("g")
+			.attr("transform", `translate(${margin * 2}, 0)`)
+			.call(d3.axisLeft(y));
+
+		for (let i = 1; i <= 10; i++) {
+			infraMarginalitySVG
+				.selectAll("mycircle")
+				.data(
+					data.filter((d) => {
+						return d["decile_score"] === i;
+					})
+				)
+				.join("circle")
+				.attr("r", "5")
+				.attr("stroke", "black")
+				.attr("transform", (d, j) => {
+					return `translate(${
+						x(d.decile_score) - 20 + (j % 5) * 11 + margin
+					}, ${y(Math.floor(j / 5) * 13) - 6})`;
+				});
+		}
 
 		// End of access to data
 	});
