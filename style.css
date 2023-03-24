@@ -91,3 +91,8 @@ svg {
 	font-size: 0.85em;
 	font-style: italic;
 }
+
+#confusionMatrix svg {
+	border: 3px solid silver;
+	padding: 3px;
+}

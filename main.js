@@ -5,6 +5,7 @@ const PATH_TO_DATA = "/data/propublica-two-years.json";
 // propublica-two-years: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,violent_recid,is_violent_recid,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,type_of_assessment,decile_score,score_text,screening_date,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,in_custody,out_custody,priors_count,start,end,event,two_year_recid
 // TODO: pick a good sample size
 const SAMPLE_SIZE = 1000;
+const MIN_SUBSAMPLE_SIZE = 75;
 const CHART_WIDTH = window.screen.width / 3 - 200;
 const CHART_HEIGHT = (window.screen.height - 300) / 2;
 const PERSON_RADIUS = 100;
@@ -20,6 +21,17 @@ const weekdays = [
 	"Thursday",
 	"Friday",
 	"Saturday",
+];
+// set2 from https://observablehq.com/@d3/color-schemes
+const optionColors = [
+	"#66c2a5",
+	"#fc8d62",
+	"#8da0cb",
+	"#e78ac3",
+	"#a6d854",
+	"#ffd92f",
+	"#e5c494",
+	"#b3b3b3",
 ];
 /* ############################################################### */
 
@@ -128,33 +140,40 @@ window.onload = () => {
 
 				if (key === "all") {
 					clusterDots(
-						data,
+						getRandomSubarray(data, MIN_SUBSAMPLE_SIZE * 2),
 						d3
 							.select("#confusionMatrix")
 							.append("svg")
-							.attr("width", 95 / options.length + "%")
+							.attr("width", "90%")
 							.attr("height", svgHeight)
 					);
 				} else {
 					options.forEach((option) => {
-						const tmp = d3
-							.select("#confusionMatrix")
-							.append("svg")
-							.attr("width", 95 / options.length + "%");
+						const thisSubset = data.filter((d) => {
+							return d[key] === option;
+						});
 
-						clusterDots(
-							data.filter((d) => {
-								return d[key] === option;
-							}),
+						// Ensure reasonable sample size
+						if (thisSubset.length > MIN_SUBSAMPLE_SIZE * 2) {
+							const tmp = d3
+								.select("#confusionMatrix")
+								.append("svg")
+								.attr("width", 95 / options.length + "%");
+
+							// Ensure same number of people in each
+							clusterDots(
+								getRandomSubarray(thisSubset, MIN_SUBSAMPLE_SIZE * 2),
+								tmp
+							);
+
 							tmp
-						);
-
-						tmp
-							.append("text")
-							.attr("x", 100)
-							.attr("y", 100)
-							.attr("font-size", "40px")
-							.text(option);
+								.append("text")
+								.attr("x", "50%")
+								.attr("y", "50%")
+								.attr("text-anchor", "middle")
+								.attr("font-size", "40px")
+								.text(option);
+						}
 					});
 				}
 			});
@@ -213,7 +232,7 @@ window.onload = () => {
 			d3
 				.select("#confusionMatrix")
 				.append("svg")
-				.attr("width", "100%")
+				.attr("width", "90%")
 				.attr("height", svgHeight)
 		);
 
@@ -249,26 +268,31 @@ function initialCalibration(data) {
 
 	const margin = 40;
 	const axisTitleSize = 30;
+	const gridLineColor = "#dedede";
 
 	// X axis
 	const xScale = d3
 		.scaleLinear()
 		.domain([11, 0]) // unclear why this is in reverse order
 		.range([width - margin * 2 - axisTitleSize, margin]);
-
 	svg
 		.append("g")
 		.attr(
 			"transform",
 			`translate(${margin}, ${height - tickLabelSize - margin})`
 		)
-		.call(d3.axisBottom(xScale))
+		// tickSize = gridlines
+		.call(d3.axisBottom(xScale).tickSize(-height))
 		.selectAll("text")
 		.attr("transform", `translate(${tickLabelSize / 2 - 3},0)rotate(0)`)
+		.attr("fill", "black")
 		.attr("font-size", tickLabelSize)
 		.style("text-anchor", "end");
 
-	// add x-axis title
+	// Style gridlines -- tick labels must specify above
+	svg.selectAll(".tick").attr("color", gridLineColor);
+
+	// x-axis title
 	svg
 		.append("text")
 		.attr("x", width / 2)
@@ -281,17 +305,21 @@ function initialCalibration(data) {
 		.scaleLinear()
 		.domain([0, 100])
 		.range([height - margin, margin]);
-
 	svg
 		.append("g")
 		.attr("transform", `translate(${margin * 2}, ${-tickLabelSize})`)
-		.call(d3.axisLeft(yScale))
+		// tickSize = gridlines
+		.call(d3.axisLeft(yScale).tickSize(-width))
 		.selectAll("text")
+		.attr("fill", "black")
 		.attr("transform", `translate(${tickLabelSize / 2 - 6},0)rotate(0)`)
 		.attr("font-size", tickLabelSize)
 		.style("text-anchor", "end");
 
-	// add y-axis title, remember that all transformations are around the (0, 0) origin
+	// Style gridlines -- tick labels must specify above
+	svg.selectAll(".tick").attr("color", gridLineColor);
+
+	// y-axis title
 	svg
 		.append("text")
 		.attr("x", -(margin + height / 2))
@@ -301,7 +329,7 @@ function initialCalibration(data) {
 		.attr("font-size", axisTitleSize)
 		.text("% who Recidivated");
 
-	function makePercentDots(data, color, option) {
+	function makePercentDots(data, color) {
 		// Add the people
 		const thisGroup = svg.append("g").attr("class", "dotLayer");
 		// TODO: fix this (and use colors)
@@ -334,7 +362,6 @@ function initialCalibration(data) {
 					)
 			);
 
-		// TODO: add vertical lines (lollipop)
 		thisGroup
 			.selectAll("circle")
 			.data(dataMap)
@@ -360,18 +387,6 @@ function initialCalibration(data) {
 		.attr("font-size", axisTitleSize * 2)
 		.text("Accuracy");
 
-	// set2 from https://observablehq.com/@d3/color-schemes
-	const optionColors = [
-		"#66c2a5",
-		"#fc8d62",
-		"#8da0cb",
-		"#e78ac3",
-		"#a6d854",
-		"#ffd92f",
-		"#e5c494",
-		"#b3b3b3",
-	];
-
 	// TODO: add legend
 	document
 		.getElementById("calibrationSelect")
@@ -386,24 +401,38 @@ function initialCalibration(data) {
 			makePercentDots(data, "black");
 
 			if (key !== "all") {
-				options.forEach((option, j) => {
-					makePercentDots(
-						data.filter((d, i) => {
-							return d[key] === option;
-						}),
-						optionColors[j],
-						option
-					);
-					// Add legend
-					svg
-						.append("text")
-						.attr("class", "legendText")
-						.attr("x", margin + width / 12)
-						.attr("y", axisTitleSize * 2 + 2 * margin + j * axisTitleSize)
-						.attr("text-anchor", "left")
-						.attr("font-size", axisTitleSize)
-						.attr("fill", optionColors[j])
-						.text(option);
+				svg
+					.append("text")
+					.attr("class", "legendText")
+					.attr("x", margin + width / 12)
+					.attr("y", axisTitleSize * 2 + 2 * margin - axisTitleSize)
+					.attr("text-anchor", "left")
+					.attr("font-size", axisTitleSize)
+					.attr("fill", "black")
+					.text("All");
+
+				let count = 0;
+				options.forEach((option) => {
+					const thisSubset = data.filter((d) => {
+						return d[key] === option;
+					});
+					// Make sure there is enough data for it to be reasonable
+					if (thisSubset.length >= MIN_SUBSAMPLE_SIZE) {
+						makePercentDots(thisSubset, optionColors[count]);
+
+						// Add text to legend
+						svg
+							.append("text")
+							.attr("class", "legendText")
+							.attr("x", margin + width / 12)
+							.attr("y", axisTitleSize * 2 + 2 * margin + count * axisTitleSize)
+							.attr("text-anchor", "left")
+							.attr("font-size", axisTitleSize)
+							.attr("fill", optionColors[count])
+							.text(option);
+
+						count++;
+					}
 				});
 			}
 		});
@@ -615,7 +644,7 @@ function clusterDots(data, svg) {
 	// via https://www.d3indepth.com/force-layout/
 	d3.forceSimulation(data)
 		// a positive value will cause elements to attract one another while a negative value causes elements to repel each other.
-		// .force("charge", d3.forceManyBody().strength(-1))
+		.force("charge", d3.forceManyBody().strength(-10))
 		.force(
 			"x",
 			d3
@@ -623,7 +652,7 @@ function clusterDots(data, svg) {
 				.x((d) => {
 					return centers[d["outcome"]]["cx"];
 				})
-				.strength(1)
+				.strength(2)
 		)
 		.force(
 			"y",
@@ -632,7 +661,7 @@ function clusterDots(data, svg) {
 				.y((d) => {
 					return centers[d["outcome"]]["cy"];
 				})
-				.strength(1)
+				.strength(2)
 		)
 		.force(
 			"collision",
@@ -647,10 +676,13 @@ function clusterDots(data, svg) {
 			.selectAll("path")
 			.data(data)
 			.join((enter) => {
-				return enter
-					.append("path")
-					.attr("d", customSqr)
-					.attr("transform", `translate(${width / 2},${height / 2})`);
+				return (
+					enter
+						.append("path")
+						.attr("d", customSqr)
+						// Appear from the middle of the matrix
+						.attr("transform", `translate(${width / 2},${height / 2})`)
+				);
 			})
 			// Orange = predicted to recidivate
 			.attr("fill", (d) => {
@@ -670,7 +702,7 @@ function clusterDots(data, svg) {
 			})
 			.transition()
 			.ease(d3.easeCubicOut)
-			.duration(4000)
+			.duration(2000)
 			.attr("transform", (d) => {
 				return `translate(${d.x},${d.y})`;
 			});
@@ -799,6 +831,11 @@ function riskScoreFrequencyFilteredMultiples(data, id, key) {
 
 /* ########################### Helper Functions ########################## */
 function getValueOptions(data, key) {
+	// Don't bother processing and sorting bc we already know
+	if (key === "day_of_week") {
+		return weekdays;
+	}
+
 	const optionsSet = new Set();
 	data.map((obj) => optionsSet.add(obj[key]));
 	// Sort alphabetically
