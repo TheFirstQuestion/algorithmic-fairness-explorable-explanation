@@ -1,6 +1,7 @@
 /* ########################### Constants ########################## */
 // TODO: link to raw GitHub hosted
-const PATH_TO_DATA = "/data/propublica-two-years.json";
+const DATA_URL =
+	"https://raw.githubusercontent.com/TheFirstQuestion/algorithmic-fairness-explorable-explanation/main/data/propublica-two-years.json";
 // probublica: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,num_r_cases,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,is_violent_recid,num_vr_cases,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,type_of_assessment,decile_score,score_text,screening_date
 // propublica-two-years: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,violent_recid,is_violent_recid,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,type_of_assessment,decile_score,score_text,screening_date,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,in_custody,out_custody,priors_count,start,end,event,two_year_recid
 // TODO: pick a good sample size
@@ -63,7 +64,8 @@ window.onload = () => {
 	vl.register(vega, vegaLite, options);
 
 	// Read in the data
-	getJSONdata((ogData) => {
+	// getJSONdata((ogData) => {
+	d3.json(DATA_URL, {}).then((ogData) => {
 		// Add and/or rename fields
 		ogData.map((d) => {
 			d["jail_recommended"] = d["decile_score"] >= 7 ? 1 : 0;
@@ -869,7 +871,7 @@ function getValueOptions(data, key) {
 function getJSONdata(callback) {
 	var rawFile = new XMLHttpRequest();
 	rawFile.overrideMimeType("application/json");
-	rawFile.open("GET", PATH_TO_DATA, true);
+	rawFile.open("GET", DATA_URL, true);
 	rawFile.onreadystatechange = function () {
 		if (rawFile.readyState === 4 && rawFile.status == "200") {
 			callback(JSON.parse(rawFile.responseText));
