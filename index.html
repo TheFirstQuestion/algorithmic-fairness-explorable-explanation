@@ -35,10 +35,10 @@
 	</head>
 
 	<body>
+		<a name="introduction"></a>
 		<section class="sectionHeader" id="introHeader">
 			<h1>Algorithmic Fairness</h1>
 			<h2>An Explorable Explanation</h2>
-			<a name="introduction"></a>
 		</section>
 
 		<section>
@@ -59,16 +59,16 @@
 
 			<p>
 				Algorithms is really complicated, so it's hard to tell when the computer
-				is being unfair. But we can look at the patterns it produces and see if
+				is being unfair. But we can look at the patterns produced and see if
 				there are any trends we don't like.
 			</p>
 
 			<p>Let's look at a real example.</p>
 		</section>
 
+		<a name="predicting_recidivism"></a>
 		<section class="sectionHeader">
 			<h1>Predicting Recidivism</h1>
-			<a name="predicting_recidivism"></a>
 		</section>
 
 		<section>
@@ -98,10 +98,10 @@
 				<strong
 					>we want a way to predict if a person is going to commit more
 					crimes</strong
-				>. This is called <span class="vocabWord">recidivism</span>. There are a
-				lot of factors we could use to predict recidivism: if they've skipped
-				town before, or how many other crimes they've committed, or how polite
-				they are.
+				>. Repeated criminal behavior is called
+				<span class="vocabWord">recidivism</span>. There are a lot of factors we
+				could use to predict recidivism: if they've skipped town before, or how
+				many other crimes they've committed, or how polite they are.
 			</p>
 
 			<p>
@@ -122,10 +122,9 @@
 			</p>
 		</section>
 
+		<a name="anti_classification"></a>
 		<section class="sectionHeader">
-			<!-- TODO: make these sections have easier names. or say the names in the body of the text -->
 			<h1>Anti-Classification</h1>
-			<a name="anti_classification"></a>
 		</section>
 
 		<section>
@@ -154,7 +153,8 @@
 
 			<p>
 				COMPAS, the algorithm used in Florida, did not include race in its risk
-				score calculations.
+				score calculations. (This is called
+				<span class="vocabWord">anti-classification</span>.)
 				<strong
 					>If COMPAS is not racially biased, then we shouldn't see vastly
 					different outcomes for people of different races</strong
@@ -165,8 +165,8 @@
 				Let's take two people, Bob and Carina. Bob and Carina have identical
 				criminal records and are accused of committing the exact same crime. The
 				only difference between them is their race. If their race isn't taken
-				into account, then they should receive the same risk score. But that's
-				not what happens with COMPAS.
+				into account, then they should receive the same risk score. Let's see
+				what happens with COMPAS.
 			</p>
 
 			<div class="vizInstructions">
@@ -188,7 +188,6 @@
 				<div class="chartWrapper" id="antiClassification1"></div>
 			</div>
 
-			<!-- TODO: finish adding options -->
 			<div class="container">
 				<select name="antiClassification2select" id="antiClassification2select">
 					<option value="all">All</option>
@@ -219,9 +218,9 @@
 			</p>
 		</section>
 
+		<a name="calibration"></a>
 		<section class="sectionHeader">
 			<h1>Calibration</h1>
-			<a name="calibration"></a>
 		</section>
 
 		<section>
@@ -254,7 +253,8 @@
 				<strong
 					>We want risk scores to predict recidivism equally well for all
 					groups</strong
-				>. The score are designed so that a 1 corresponds to 10% chance of
+				>. (This is called <span class="vocabWord">calibration</span>.) The
+				score are designed so that a 1 corresponds to 10% chance of
 				recidivating, at 2 to 20%, and so on.
 			</p>
 
@@ -264,7 +264,11 @@
 			</p>
 
 			<div class="vizInstructions">
-				<p>something here about accuracy idk</p>
+				<p>
+					In the below chart, the black line shows the accuracy for everyone in
+					the data. You can select a specific category to group by, and compare
+					the accuracy for different groups.
+				</p>
 			</div>
 
 			<div class="container">
@@ -279,37 +283,35 @@
 				</select>
 			</div>
 
-			<div class="container" id="calibration"></div>
-		</section>
+			<div class="container" id="calibrationDiv"></div>
 
-		<section class="sectionHeader">
-			<h1>Confusion Matrix</h1>
-			<a name="confusion_matrix"></a>
-		</section>
+			<p>
+				Okay, so those lines are all relatively close (with some wiggle room for
+				~randomness~). COMPAS is pretty much equally accurate for all groups -
+				great, we solved it!
+			</p>
 
-		<section>
-			<p>Well, those lines are pretty darn close. Great, we solved it!</p>
 			<p>Or did we? Let's see how COMPAS plays out.</p>
 
+			<p>
+				We want the risk scores to predict recidivism equally well: the same
+				proportion of people <em>predicted</em> to not recidivate who
+				<em>actually</em> don't recidivate should be the same across groups.
+			</p>
+
 			<div class="vizInstructions">
-				<p>
-					Sometimes the algorithm is right, and jails those who would have
-					recidivated. But it also sometimes jails those who wouldn't have. We
-					want the risk scores to predict recidivism equally well: the same
-					proportion of people <em>predicted</em> to not recidivate who
-					<em>actually</em> don't recidivate should be the same across groups.
-				</p>
-
-				<p>disclaimer about sample size</p>
-
 				<p>
 					How many people are being wrongly kept in jail (top right)? How many
 					people are out on bail and commit another crime (bottom left)?
 				</p>
+
+				<p>
+					Again, you can select a specific category to group by, and compare the
+					accuracy for different groups.
+				</p>
 			</div>
 
 			<div class="container">
-				<!-- TODO: set this to trigger only when scrolled into view -->
 				<select name="confusionMatrixSelect" id="confusionMatrixSelect">
 					<option value="all">All</option>
 					<option value="race">Race</option>
@@ -332,14 +334,36 @@
 			</p>
 		</section>
 
+		<a name="inframarginality"></a>
 		<section class="sectionHeader">
 			<h1>Infra-Marginality</h1>
-			<a name="inframarginality"></a>
 		</section>
 
-		<p>We want to treat people with the same risk score in the same way.</p>
-
 		<section>
+			<p>
+				We said earlier that race affects the risk score. On average, the risk
+				distribution for Black individuals is higher than that of white
+				individuals. As a result, Black individuals who wouldn't recidivate are
+				given a higher risk score than a white individual - so more Black
+				individuals are wrongly imprisoned.
+			</p>
+
+			<p>
+				Because the risk distributions are different for each group (which is
+				called <span class="vocabWord">infra-marginality</span>),
+				<strong
+					>using the same threshold for all groups produces different rates of
+					incorrect imprisonment and wrongful release</strong
+				>.
+			</p>
+
+			<p>Linked lines on will go here!!!!!</p>
+
+			<p>
+				So what if we <em>don't</em> use the same threshold for all groups? Can
+				we equalize the kinds of errors?
+			</p>
+
 			<div class="container">
 				<select name="inframarginalitySelect" id="inframarginalitySelect">
 					<option value="all">All</option>
@@ -353,25 +377,101 @@
 			</div>
 
 			<div class="container" id="inframarginality"></div>
+
+			<p>
+				Cool, we can do that! But this doesn't seem very fair, either. Now we're
+				using protected characteristics (like race) to judge people, which seems
+				bad. (What if we don't consider race? That takes us back to
+				<a href="#anti_classification">anti-classification</a>...)
+				<strong
+					>We want to treat people with the same risk score in the same
+					way</strong
+				>: if Francis and and Georgia have the same risk score, they should both
+				be released or both be jailed, even if they are of different races.
+				(Hey, isn't that <a href="#calibration">calibration</a>?)
+			</p>
+
+			<p>
+				Seems like we're running into problems with every definition of
+				fairness. :(
+			</p>
 		</section>
 
+		<a name="conclusion"></a>
 		<section class="sectionHeader">
 			<h1>Conclusion</h1>
-			<a name="conclusion"></a>
 		</section>
 
 		<section>
 			<p>
+				It turns out that
+				<strong
+					>it's mathematically impossible to satisfy all the definitions of
+					fairness at the same time</strong
+				>. And this conflict happens in every kind of decision-making, human or
+				automated. It's a forced trade-off: we have to choose which criteria to
+				meet and which to give up on.
+			</p>
+
+			<p>
 				An algorithm is not impartial. Humans design the algorithm, and encode
-				their own values into it. It's up to us to look at the outcomes of an
-				algorithm and decide if we like what we see. We can always change the
-				algorithm to align with our values - if we decide and define what our
-				values are.
+				their own values into it. We can always change the algorithm to align
+				with our values, if we decide and define what our values are. It's up to
+				us to take a critical look at the outcomes of an algorithm and decide if
+				we like what we see.
 			</p>
 		</section>
 
 		<section id="footerSection">
-			<p>Thanks to so and so for blah blah.</p>
+			<h3>Want to learn more?</h3>
+
+			<p>
+				ProPublica collected and analyzed the COMPAS data first; you can read
+				their article
+				<a
+					href="https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing"
+					target="_blank"
+					rel="noopener noreferrer"
+					>here</a
+				>.
+			</p>
+
+			<p>
+				More generally, Cathy O'Neil's book
+				<a href="https://en.wikipedia.org/wiki/Weapons_of_Math_Destruction"
+					>Weapons of Math Destruction</a
+				>
+				looks at the use of algorithms in a variety of contexts.
+			</p>
+
+			<h3>Like this style of explanation?</h3>
+
+			<p>
+				Me too! It's called an
+				<a
+					href="https://explorabl.es/"
+					target="_blank"
+					rel="noopener noreferrer"
+					>explorable explanation</a
+				>, and they're pretty cool.
+			</p>
+			<p>
+				I highly recommend checking out
+				<a href="https://ncase.me/" target="_blank" rel="noopener noreferrer"
+					>Nicky Case</a
+				>; this work is heavily inspired by theirs.
+			</p>
+
+			<h3>Thanks for reading!</h3>
+			<br />
+
+			<small
+				><em
+					><a href="https://thefirstquestion.github.io/"
+						>made with &lt;3 by Steven G. Opferman</a
+					></em
+				></small
+			>
 		</section>
 	</body>
 </html>

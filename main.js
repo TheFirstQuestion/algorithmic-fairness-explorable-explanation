@@ -1,9 +1,6 @@
 /* ########################### Constants ########################## */
-// TODO: link to raw GitHub hosted
 const DATA_URL =
 	"https://raw.githubusercontent.com/TheFirstQuestion/algorithmic-fairness-explorable-explanation/main/data/propublica-two-years.json";
-// probublica: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,num_r_cases,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,is_violent_recid,num_vr_cases,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,type_of_assessment,decile_score,score_text,screening_date
-// propublica-two-years: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,violent_recid,is_violent_recid,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,type_of_assessment,decile_score,score_text,screening_date,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,in_custody,out_custody,priors_count,start,end,event,two_year_recid
 // TODO: pick a good sample size
 const SAMPLE_SIZE = 1000;
 const MIN_SUBSAMPLE_SIZE = 75;
@@ -129,7 +126,6 @@ window.onload = () => {
 				// riskScoreFrequencyFilteredMultiples(data, "antiClassification2", key);
 			});
 
-		// TODO: should resample here so same number of people
 		/* ########################### Confusion Matrix ########################## */
 		document
 			.getElementById("confusionMatrixSelect")
@@ -151,12 +147,13 @@ window.onload = () => {
 					);
 				} else {
 					options.forEach((option) => {
-						const thisSubset = data.filter((d) => {
+						// We'll resample here
+						const thisSubset = ogData.filter((d) => {
 							return d[key] === option;
 						});
 
 						// Ensure reasonable sample size
-						if (thisSubset.length > MIN_SUBSAMPLE_SIZE * 2) {
+						if (thisSubset.length > MIN_SUBSAMPLE_SIZE * 3) {
 							const tmp = d3
 								.select("#confusionMatrix")
 								.append("svg")
@@ -164,7 +161,7 @@ window.onload = () => {
 
 							// Ensure same number of people in each
 							clusterDots(
-								getRandomSubarray(thisSubset, MIN_SUBSAMPLE_SIZE * 2),
+								getRandomSubarray(thisSubset, MIN_SUBSAMPLE_SIZE * 3),
 								tmp
 							);
 
@@ -265,7 +262,7 @@ function initialCalibration(data) {
 	const tickLabelSize = 20;
 
 	const svg = d3
-		.select("#calibration")
+		.select("#calibrationDiv")
 		.append("svg")
 		.attr("width", width)
 		.attr("height", height);

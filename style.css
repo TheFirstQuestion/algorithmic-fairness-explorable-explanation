@@ -96,3 +96,28 @@ svg {
 	border: 3px solid silver;
 	padding: 3px;
 }
+
+a {
+	color: #2e79db;
+}
+
+#footerSection {
+	font-size: 0.7em;
+	padding-bottom: 3em;
+}
+
+#footerSection p {
+	margin: 2px;
+}
+
+#footerSection h3 {
+	font-size: 2em;
+	margin-top: 2em;
+	margin-bottom: 0;
+}
+
+#footerSection small {
+	font-size: 1.4em;
+	margin: 10px;
+	margin-top: 100px;
+}
