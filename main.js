@@ -1,7 +1,9 @@
 /* ########################### Constants ########################## */
+// TODO: link to raw GitHub hosted
 const PATH_TO_DATA = "/data/propublica-two-years.json";
 // probublica: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,num_r_cases,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,is_violent_recid,num_vr_cases,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,type_of_assessment,decile_score,score_text,screening_date
 // propublica-two-years: id,name,first,last,compas_screening_date,sex,dob,age,age_cat,race,juv_fel_count,decile_score,juv_misd_count,juv_other_count,priors_count,days_b_screening_arrest,c_jail_in,c_jail_out,c_case_number,c_offense_date,c_arrest_date,c_days_from_compas,c_charge_degree,c_charge_desc,is_recid,r_case_number,r_charge_degree,r_days_from_arrest,r_offense_date,r_charge_desc,r_jail_in,r_jail_out,violent_recid,is_violent_recid,vr_case_number,vr_charge_degree,vr_offense_date,vr_charge_desc,type_of_assessment,decile_score,score_text,screening_date,v_type_of_assessment,v_decile_score,v_score_text,v_screening_date,in_custody,out_custody,priors_count,start,end,event,two_year_recid
+// TODO: pick a good sample size
 const SAMPLE_SIZE = 1000;
 const CHART_WIDTH = window.screen.width / 3 - 200;
 const CHART_HEIGHT = (window.screen.height - 300) / 2;
@@ -60,7 +62,7 @@ window.onload = () => {
 		// Sample the data
 		const data = getRandomSubarray(ogData, SAMPLE_SIZE);
 
-		// Add eventListeners for interactive inputs
+		// Anti-Classification
 		document
 			.getElementById("antiClassification2select")
 			.addEventListener("input", (e) => {
@@ -83,6 +85,7 @@ window.onload = () => {
 			});
 
 		// TODO: should resample here so same number of people
+		/* ########################### Confusion Matrix ########################## */
 		document
 			.getElementById("confusionMatrixSelect")
 			.addEventListener("input", (e) => {
@@ -126,7 +129,7 @@ window.onload = () => {
 				}
 			});
 
-		// inframarginality
+		/* ########################### Infra-Marginality ########################## */
 		document
 			.getElementById("inframarginalitySelect")
 			.addEventListener("input", (e) => {
@@ -175,7 +178,6 @@ window.onload = () => {
 		riskScoreFrequency(data, "antiClassification1");
 
 		/* ########################### Confusion Matrix ########################## */
-		// Create the SVG
 		clusterDots(
 			data,
 			d3
@@ -194,15 +196,186 @@ window.onload = () => {
 				.attr("height", svgHeight)
 		);
 
-		/* ########################### Infra-Marginality ########################## */
+		/* ########################### Calibration ########################## */
+
+		initialCalibration(data);
 
 		// End of access to data
 	});
 };
 
-//* ########################### Inframarginality ########################## */
-// TODO: make the bar width depend on size
+/* ########################### Initial Calibration ########################## */
 
+function initialCalibration(data) {
+	const width = svgWidth;
+	const height = svgHeight;
+	const tickLabelSize = 20;
+
+	const svg = d3
+		.select("#calibration")
+		.append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+	const margin = 40;
+	const axisTitleSize = 30;
+
+	// X axis
+	const xScale = d3
+		.scaleLinear()
+		.domain([11, 0]) // unclear why this is in reverse order
+		.range([width - margin * 2 - axisTitleSize, margin]);
+
+	svg
+		.append("g")
+		.attr(
+			"transform",
+			`translate(${margin}, ${height - tickLabelSize - margin})`
+		)
+		.call(d3.axisBottom(xScale))
+		.selectAll("text")
+		.attr("transform", `translate(${tickLabelSize / 2 - 3},0)rotate(0)`)
+		.attr("font-size", tickLabelSize)
+		.style("text-anchor", "end");
+
+	// add x-axis title
+	svg
+		.append("text")
+		.attr("x", width / 2)
+		.attr("y", height)
+		.attr("font-size", axisTitleSize)
+		.text("Risk Score");
+
+	// Add Y axis
+	const yScale = d3
+		.scaleLinear()
+		.domain([0, 100])
+		.range([height - margin, margin]);
+
+	svg
+		.append("g")
+		.attr("transform", `translate(${margin * 2}, ${-tickLabelSize})`)
+		.call(d3.axisLeft(yScale))
+		.selectAll("text")
+		.attr("transform", `translate(${tickLabelSize / 2 - 6},0)rotate(0)`)
+		.attr("font-size", tickLabelSize)
+		.style("text-anchor", "end");
+
+	// add y-axis title, remember that all transformations are around the (0, 0) origin
+	svg
+		.append("text")
+		.attr("x", -(margin + height / 2))
+		.attr("y", axisTitleSize)
+		.attr("transform", `rotate(-90)`)
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize)
+		.text("Percent of People Who Recidivated");
+
+	function makePercentDots(data, color, option) {
+		// Add the people
+		const thisGroup = svg.append("g").attr("class", "dotLayer");
+
+		// via https://stackoverflow.com/a/65745675
+		const dataMap = d3.rollup(
+			data,
+			(v) => v.length,
+			(d) => d.decile_score,
+			(d) => d.did_recidivate
+		);
+
+		// Add the line
+		thisGroup
+			.append("path")
+			.datum(d3.sort(dataMap, (d) => d[0]))
+			.attr("fill", "none")
+			.attr("stroke", color)
+			.attr("stroke-width", 1.5)
+			.attr(
+				"d",
+				d3
+					.line()
+					.x((d) => xScale(d[0]) + margin)
+					.y(
+						(d) =>
+							yScale((100 * d[1].get(1)) / (d[1].get(1) + d[1].get(0))) ||
+							0 + tickLabelSize
+					)
+			);
+
+		thisGroup
+			.selectAll("circle")
+			.data(dataMap)
+			.join("circle")
+			.attr("r", 10)
+			.attr("fill", color)
+			.attr("transform", (d) => {
+				return `translate(${xScale(d[0]) + margin}, ${
+					yScale((100 * d[1].get(1)) / (d[1].get(1) + d[1].get(0))) ||
+					0 + tickLabelSize
+				})`;
+			});
+
+		// TODO: fix this
+		thisGroup
+			.append("text")
+			.attr("x", width / 2 + margin)
+			.attr("y", axisTitleSize * 2 + 2 * margin)
+			.attr("text-anchor", "middle")
+			.attr("font-size", axisTitleSize)
+			.attr("fill", color)
+			.attr("text", option);
+	}
+
+	makePercentDots(data, "black");
+
+	// add chart title
+	svg
+		.append("text")
+		.attr("x", width / 2 + margin)
+		.attr("y", axisTitleSize * 2 + margin)
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize * 2)
+		.text("Accuracy");
+
+	// set2 from https://observablehq.com/@d3/color-schemes
+	const optionColors = [
+		"#66c2a5",
+		"#fc8d62",
+		"#8da0cb",
+		"#e78ac3",
+		"#a6d854",
+		"#ffd92f",
+		"#e5c494",
+		"#b3b3b3",
+	];
+
+	// TODO: add legend
+	document
+		.getElementById("calibrationSelect")
+		.addEventListener("input", (e) => {
+			const key = e.target.value;
+			const options = getValueOptions(data, key);
+
+			// Remove existing charts
+			svg.selectAll(".dotLayer").remove();
+			// Add back the initial dots
+			makePercentDots(data, "black");
+
+			if (key !== "all") {
+				options.forEach((option, j) => {
+					makePercentDots(
+						data.filter((d, i) => {
+							return d[key] === option;
+						}),
+						optionColors[j],
+						option
+					);
+				});
+			}
+		});
+}
+
+/* ########################### Inframarginality ########################## */
 function makeInframarginality(data, svg) {
 	const margin = 40;
 	const axisTitleSize = 30;
