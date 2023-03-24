@@ -232,9 +232,11 @@ window.onload = () => {
 			d3
 				.select("#confusionMatrix")
 				.append("svg")
+				.attr("id", "confusionMatrixSVG")
 				.attr("width", "90%")
 				.attr("height", svgHeight)
 		);
+		drawFence();
 
 		makeInframarginality(
 			data,
@@ -253,7 +255,7 @@ window.onload = () => {
 	});
 };
 
-/* ########################### Initial Calibration ########################## */
+/* ########################### Calibration ########################## */
 
 function initialCalibration(data) {
 	const width = svgWidth;
@@ -616,6 +618,27 @@ function makeInframarginality(data, svg) {
 }
 
 //* ########################### Confusion Matrix ########################## */
+// TODO: this doesn't work
+function drawFence() {
+	const svg = d3.select("#confusionMatrixSVG").append("g");
+	const width = parseFloat(svg.style("width"));
+	const height = parseFloat(svg.style("height"));
+
+	svg
+		.selectAll("circle")
+		.join("circle")
+		.append("circle")
+		.attr("cx", 100)
+		.attr("cy", 100)
+		.attr("r", 50);
+
+	const spacing = 10;
+
+	for (let i = 0; i < 100; i++) {
+		svg.select("path").attr("d", d3.line([i * spacing, i * spacing]));
+	}
+}
+
 function clusterDots(data, svg) {
 	// via https://stackoverflow.com/a/40922248
 	const width = parseFloat(svg.style("width"));
