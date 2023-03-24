@@ -15,6 +15,7 @@ select {
 	display: flex;
 	width: 100%;
 	justify-content: space-evenly;
+	flex-wrap: wrap;
 	/* border: 1px solid cyan; */
 }
 
@@ -68,8 +69,11 @@ p {
 
 svg {
 	/* border: 3px solid silver; */
+	padding: 2px;
 	margin-bottom: 3em;
 	margin-top: 3em;
+	min-width: 500px;
+	aspect-ratio: 1;
 }
 
 .vocabWord {

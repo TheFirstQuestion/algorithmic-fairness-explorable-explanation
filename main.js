@@ -12,6 +12,15 @@ const PERSON_RADIUS = 100;
 const RISK_SCORE_RANGE = "datum.decile_score > 0 & datum.decile_score <= 10";
 const svgWidth = 900;
 const svgHeight = 900;
+const weekdays = [
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday",
+];
 /* ############################################################### */
 
 // via http://using-d3js.com/05_10_symbols.html
@@ -43,11 +52,30 @@ window.onload = () => {
 
 	// Read in the data
 	getJSONdata((ogData) => {
-		// Add fields for ease of use
+		// Add and/or rename fields
 		ogData.map((d) => {
 			d["jail_recommended"] = d["decile_score"] >= 7 ? 1 : 0;
 			d["did_recidivate"] = d["two_year_recid"];
 			d["radius"] = Math.sqrt(PERSON_RADIUS);
+
+			// via https://stackoverflow.com/a/51241958
+			d["name_begins_with_vowel"] = d["first"].match("^[aieouAIEOU].*")
+				? "Vowel"
+				: "Consonant";
+
+			d["charge_degree"] =
+				d["c_charge_degree"] === "M" ? "Misdemeanor" : "Felony";
+
+			// Rename so alphabetize sensically
+			if (d.age_cat === "Greater than 45") {
+				d.age_cat = "45 or older";
+			} else if (d.age_cat === "Less than 25") {
+				d.age_cat = "25 or younger";
+			} else if (d.age_cat === "25 - 45") {
+				d.age_cat = "25 to 45";
+			}
+
+			d["day_of_week"] = weekdays[new Date(d.dob).getDay()];
 
 			if (d.jail_recommended === 1 && d.did_recidivate === 1) {
 				d["outcome"] = "true_positive";
@@ -59,6 +87,9 @@ window.onload = () => {
 				d["outcome"] = "false_negative";
 			}
 		});
+
+		// console.log(ogData.slice(0, 10));
+
 		// Sample the data
 		const data = getRandomSubarray(ogData, SAMPLE_SIZE);
 
@@ -109,8 +140,7 @@ window.onload = () => {
 						const tmp = d3
 							.select("#confusionMatrix")
 							.append("svg")
-							.attr("width", 95 / options.length + "%")
-							.attr("height", svgHeight);
+							.attr("width", 95 / options.length + "%");
 
 						clusterDots(
 							data.filter((d) => {
@@ -145,7 +175,7 @@ window.onload = () => {
 						d3
 							.select("#inframarginality")
 							.append("svg")
-							.attr("width", "100%")
+							.attr("width", "80%")
 							.attr("height", svgHeight)
 					);
 				} else {
@@ -153,8 +183,8 @@ window.onload = () => {
 						const tmp = d3
 							.select("#inframarginality")
 							.append("svg")
-							.attr("width", 100 / options.length + "%")
-							.attr("height", svgHeight);
+							.attr("width", 90 / options.length + "%");
+						// Height will be same, to maintain aspect ratio (per css)
 
 						makeInframarginality(
 							data.filter((d) => {
@@ -192,7 +222,7 @@ window.onload = () => {
 			d3
 				.select("#inframarginality")
 				.append("svg")
-				.attr("width", "100%")
+				.attr("width", "80%")
 				.attr("height", svgHeight)
 		);
 
@@ -269,11 +299,13 @@ function initialCalibration(data) {
 		.attr("transform", `rotate(-90)`)
 		.attr("text-anchor", "middle")
 		.attr("font-size", axisTitleSize)
-		.text("Percent of People Who Recidivated");
+		.text("% who Recidivated");
 
 	function makePercentDots(data, color, option) {
 		// Add the people
 		const thisGroup = svg.append("g").attr("class", "dotLayer");
+		// TODO: fix this (and use colors)
+		thisGroup.append("text").attr("x", 200).attr("y", 200).attr("text", "ACK");
 
 		// via https://stackoverflow.com/a/65745675
 		const dataMap = d3.rollup(
@@ -302,6 +334,7 @@ function initialCalibration(data) {
 					)
 			);
 
+		// TODO: add vertical lines (lollipop)
 		thisGroup
 			.selectAll("circle")
 			.data(dataMap)
@@ -314,16 +347,6 @@ function initialCalibration(data) {
 					0 + tickLabelSize
 				})`;
 			});
-
-		// TODO: fix this
-		thisGroup
-			.append("text")
-			.attr("x", width / 2 + margin)
-			.attr("y", axisTitleSize * 2 + 2 * margin)
-			.attr("text-anchor", "middle")
-			.attr("font-size", axisTitleSize)
-			.attr("fill", color)
-			.attr("text", option);
 	}
 
 	makePercentDots(data, "black");
@@ -358,6 +381,7 @@ function initialCalibration(data) {
 
 			// Remove existing charts
 			svg.selectAll(".dotLayer").remove();
+			svg.selectAll(".legendText").remove();
 			// Add back the initial dots
 			makePercentDots(data, "black");
 
@@ -370,6 +394,16 @@ function initialCalibration(data) {
 						optionColors[j],
 						option
 					);
+					// Add legend
+					svg
+						.append("text")
+						.attr("class", "legendText")
+						.attr("x", margin + width / 12)
+						.attr("y", axisTitleSize * 2 + 2 * margin + j * axisTitleSize)
+						.attr("text-anchor", "left")
+						.attr("font-size", axisTitleSize)
+						.attr("fill", optionColors[j])
+						.text(option);
 				});
 			}
 		});
@@ -767,7 +801,8 @@ function riskScoreFrequencyFilteredMultiples(data, id, key) {
 function getValueOptions(data, key) {
 	const optionsSet = new Set();
 	data.map((obj) => optionsSet.add(obj[key]));
-	return [...optionsSet];
+	// Sort alphabetically
+	return [...optionsSet].sort();
 }
 
 // Source: https://stackoverflow.com/a/34579496
