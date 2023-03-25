@@ -8,7 +8,6 @@ const CHART_WIDTH = window.screen.width / 3 - 200;
 const CHART_HEIGHT = (window.screen.height - 300) / 2;
 const PERSON_RADIUS = 100;
 /* ############################################################### */
-const RISK_SCORE_RANGE = "datum.decile_score > 0 & datum.decile_score <= 10";
 const svgWidth = 900;
 const svgHeight = 900;
 const weekdays = [
@@ -51,15 +50,6 @@ const customSqr = d3
 
 // Runs when the page (and libraries) are loaded
 window.onload = () => {
-	// Source: https://observablehq.com/@vega/vega-lite-api#standalone_use
-	const options = {
-		view: {
-			renderer: "canvas",
-		},
-	};
-	// register vega and vega-lite with the API
-	vl.register(vega, vegaLite, options);
-
 	// Read in the data
 	// getJSONdata((ogData) => {
 	d3.json(DATA_URL, {}).then((ogData) => {
@@ -99,8 +89,6 @@ window.onload = () => {
 			}
 		});
 
-		// console.log(ogData.slice(0, 10));
-
 		// Sample the data
 		const data = getRandomSubarray(ogData, SAMPLE_SIZE);
 
@@ -108,22 +96,44 @@ window.onload = () => {
 		document
 			.getElementById("antiClassification2select")
 			.addEventListener("input", (e) => {
-				// Remove existing charts
-				const list = document.getElementById("antiClassification2");
-				while (list.hasChildNodes()) {
-					list.removeChild(list.firstChild);
-				}
-
-				// Generate the new charts, one for each possible value
 				const key = e.target.value;
 				const options = getValueOptions(data, key);
-				// TODO: all of these should have the same axes (% of that group) and legends -- small multiples in vega-lite
-				// TODO: add titles, adjust width to number of facets
-				options.forEach((option) => {
-					let filterStr = `datum.${key} == "${option}"`;
-					riskScoreFrequencyFiltered(data, "antiClassification2", filterStr);
-				});
-				// riskScoreFrequencyFilteredMultiples(data, "antiClassification2", key);
+
+				// Remove existing charts
+				d3.select("#antiClassification2").selectAll("svg").remove();
+
+				if (key === "all") {
+					makeAntiClassification(
+						data,
+						d3
+							.select("#antiClassification2")
+							.append("svg")
+							.attr("width", "80%")
+							.attr("height", svgHeight)
+					);
+				} else {
+					options.forEach((option) => {
+						const tmp = d3
+							.select("#antiClassification2")
+							.append("svg")
+							.attr("width", 90 / options.length + "%");
+						// Height will be same, to maintain aspect ratio (per css)
+
+						const thisData = data.filter((d) => {
+							return d[key] === option;
+						});
+
+						if (thisData.length > MIN_SUBSAMPLE_SIZE) {
+							makeAntiClassification(thisData, tmp);
+							tmp
+								.append("text")
+								.attr("x", 100)
+								.attr("y", 50)
+								.attr("font-size", "40px")
+								.text(option);
+						}
+					});
+				}
 			});
 
 		/* ########################### Confusion Matrix ########################## */
@@ -206,25 +216,30 @@ window.onload = () => {
 							.attr("width", 90 / options.length + "%");
 						// Height will be same, to maintain aspect ratio (per css)
 
-						makeInframarginality(
-							data.filter((d) => {
-								return d[key] === option;
-							}),
-							tmp,
-							d3.dispatch("lineDragged"),
-							"lineDragged"
-						);
+						const thisData = data.filter((d) => {
+							return d[key] === option;
+						});
 
-						tmp
-							.append("text")
-							.attr("x", 100)
-							.attr("y", 50)
-							.attr("font-size", "40px")
-							.text(option);
+						if (thisData.length > MIN_SUBSAMPLE_SIZE) {
+							makeInframarginality(
+								thisData,
+								tmp,
+								d3.dispatch("lineDragged"),
+								"lineDragged"
+							);
+
+							tmp
+								.append("text")
+								.attr("x", 100)
+								.attr("y", 50)
+								.attr("font-size", "40px")
+								.text(option);
+						}
 					});
 				}
 			});
 
+		// Super terrible, slightly modified copy/paste of above
 		document
 			.getElementById("inframarginalityConnectedSelect")
 			.addEventListener("input", (e) => {
@@ -254,28 +269,42 @@ window.onload = () => {
 							.attr("width", 90 / options.length + "%");
 						// Height will be same, to maintain aspect ratio (per css)
 
-						makeInframarginality(
-							data.filter((d) => {
-								return d[key] === option;
-							}),
-							tmp,
-							dispatchConnected,
-							"connectedLineDragged"
-						);
+						let thisData = data.filter((d) => {
+							return d[key] === option;
+						});
 
-						tmp
-							.append("text")
-							.attr("x", 100)
-							.attr("y", 50)
-							.attr("font-size", "40px")
-							.text(option);
+						if (thisData.length > MIN_SUBSAMPLE_SIZE) {
+							makeInframarginality(
+								thisData,
+								tmp,
+								dispatchConnected,
+								"connectedLineDragged"
+							);
+
+							tmp
+								.append("text")
+								.attr("x", 100)
+								.attr("y", 50)
+								.attr("font-size", "40px")
+								.text(option);
+						}
 					});
 				}
 			});
 
+		/* ########################### Anti-Classification ########################## */
 		// Make initial graphs
 		// TODO: add line of best fit to this
-		riskScoreFrequency(data, "antiClassification1");
+		// riskScoreFrequency(data, "antiClassification1");
+
+		makeAntiClassification(
+			data,
+			d3
+				.select("#antiClassification1")
+				.append("svg")
+				.attr("width", "80%")
+				.attr("height", svgHeight)
+		);
 
 		/* ########################### Confusion Matrix ########################## */
 		clusterDots(
@@ -318,6 +347,107 @@ window.onload = () => {
 		// End of access to data
 	});
 };
+
+/* ########################### Anti-Classification ########################## */
+
+function makeAntiClassification(data, svg) {
+	const margin = 40;
+	const axisTitleSize = 30;
+	const tickLabelSize = 20;
+
+	const width = parseFloat(svg.style("width"));
+	const height = parseFloat(svg.style("height"));
+
+	const widthOfDot = 8;
+	const numDotsAcross = Math.floor(width / (10 * widthOfDot) / 2);
+
+	// X axis
+	const xScale = d3
+		.scaleLinear()
+		.domain([11, 0]) // unclear why this is in reverse order
+		.range([width - margin * 2 - axisTitleSize, margin]);
+
+	svg
+		.append("g")
+		.attr(
+			"transform",
+			`translate(${margin}, ${height - tickLabelSize - margin})`
+		)
+		.call(d3.axisBottom(xScale))
+		.selectAll("text")
+		.attr("transform", `translate(${tickLabelSize / 2 - 3},0)rotate(0)`)
+		.attr("font-size", tickLabelSize)
+		.style("text-anchor", "end");
+
+	// add x-axis title
+	svg
+		.append("text")
+		.attr("x", width / 2)
+		.attr("y", height)
+		.attr("font-size", axisTitleSize)
+		.text("Risk Score");
+
+	// Add Y axis
+	const yScale = d3
+		.scaleLinear()
+		.domain([0, 1000 / numDotsAcross])
+		.range([height - margin, margin]);
+
+	svg
+		.append("g")
+		.attr("transform", `translate(${margin * 2}, ${-tickLabelSize})`)
+		.call(d3.axisLeft(yScale))
+		.selectAll("text")
+		.attr("transform", `translate(${tickLabelSize / 2 - 6},0)rotate(0)`)
+		.attr("font-size", tickLabelSize)
+		.style("text-anchor", "end");
+
+	// add y-axis title, remember that all transformations are around the (0, 0) origin
+	svg
+		.append("text")
+		.attr("x", -(margin + height / 2))
+		.attr("y", axisTitleSize)
+		.attr("transform", `rotate(-90)`)
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize)
+		.text("Number of People");
+
+	// Add the people
+	for (let i = 1; i <= 10; i++) {
+		svg
+			.selectAll("mycircle")
+			.data(
+				data.filter((d) => {
+					return d["decile_score"] === i;
+				})
+			)
+			.join("circle")
+			.attr("r", widthOfDot / 2)
+			.attr("stroke-width", 1)
+			// TODO: make sure these line up with axis... make them taller than wide?
+			.attr("transform", (d, j) => {
+				return `translate(${
+					xScale(d.decile_score) -
+					(widthOfDot * numDotsAcross) / 2 +
+					(j % numDotsAcross) * (widthOfDot + 1) +
+					margin
+				}, ${
+					yScale((Math.floor(j / numDotsAcross) * widthOfDot) / 2) -
+					6 -
+					tickLabelSize
+				})`;
+			});
+	}
+
+	// add chart title and subtitle
+	svg
+		.append("text")
+		.attr("x", width / 2 + margin)
+		.attr("y", axisTitleSize * 2 + margin)
+		.attr("text-anchor", "middle")
+		.attr("font-size", axisTitleSize * 2)
+		.text("Risk Distribution");
+}
 
 /* ########################### Calibration ########################## */
 
@@ -794,126 +924,6 @@ function clusterDots(data, svg) {
 	}
 }
 
-//* ########################### Anti-Classification Section ########################## */
-// TODO: do this in D3 https://observablehq.com/@d3/beeswarm
-function riskScoreFrequency(data, id) {
-	const points = vl.markPoint().encode(
-		vl.x().fieldO("decile_score").axis({
-			title: "Risk Score",
-			titleAnchor: "center",
-			labelAngle: 0,
-		}),
-		vl.xOffset().fieldQ("age"),
-		vl.y().fieldO("index").axis(null).sort("descending"),
-		vl.color().fieldN("race")
-	);
-
-	const rectangles = vl
-		.markRect({ stroke: "black", fill: "transparent" })
-		.encode(
-			vl.x().fieldO("decile_score"),
-			vl.y().count().axis({ title: "Number of People" })
-		);
-
-	vl.layer(points, rectangles)
-		.data(data)
-		.transform(
-			vl.window(vl.row_number().as("index")).groupby("decile_score"),
-			// TODO: fix jitter: https://vega.github.io/vega-lite/examples/point_offset_random.html
-			// vl.calculate(Math.random() * 10).as("jitter"),
-			vl.filter(RISK_SCORE_RANGE)
-		)
-		.width(CHART_WIDTH)
-		.height(CHART_HEIGHT)
-		.render()
-		.then((viewElement) => {
-			document.getElementById(id).appendChild(viewElement);
-		});
-}
-
-function riskScoreFrequencyFiltered(data, id, filterStr) {
-	const points = vl.markPoint().encode(
-		vl.x().fieldO("decile_score").axis({
-			title: "Risk Score",
-			titleAnchor: "center",
-			labelAngle: 0,
-		}),
-		vl.y().fieldO("index").axis(null).sort("descending"),
-		vl.color().fieldN("race"),
-		vl.xOffset().fieldQ("age")
-	);
-
-	const rectangles = vl
-		.markRect({ stroke: "black", fill: "transparent" })
-		.encode(
-			vl.x().fieldO("decile_score"),
-			vl.y().count().axis({ title: "Number of People" })
-		);
-
-	vl.layer(points, rectangles)
-		.data(data)
-		.transform(
-			vl.window(vl.row_number().as("index")).groupby("decile_score"),
-			vl.filter(`${filterStr} & ${RISK_SCORE_RANGE}`)
-		)
-		.width(CHART_WIDTH)
-		.height(CHART_HEIGHT)
-		.render()
-		.then((viewElement) => {
-			const wrapper = document.createElement("div");
-			wrapper.classList.add("chartWrapper");
-			document.getElementById(id).appendChild(wrapper).appendChild(viewElement);
-		});
-}
-
-// Running into bug making small multiples: https://github.com/vega/vega-lite/issues/4373
-function riskScoreFrequencyFilteredMultiples(data, id, key) {
-	const points = vl
-		.markPoint()
-		.data(data)
-		.transform(
-			vl.window(vl.row_number().as("index")).groupby("decile_score"),
-			vl.filter(RISK_SCORE_RANGE)
-		)
-		.encode(
-			vl.x().fieldO("decile_score"),
-			vl.xOffset().fieldQ("age"),
-			vl.y().fieldO("index").axis(null).sort("descending"),
-			vl.color().fieldN("race")
-		);
-
-	const d = [...data];
-
-	const rectangles = vl
-		.markRect({ stroke: "black", fill: "transparent" })
-		.data(data)
-		.transform(
-			vl.window(vl.row_number().as("index")).groupby("decile_score"),
-			vl.filter(RISK_SCORE_RANGE)
-		)
-		.encode(
-			vl.x().fieldO("decile_score").axis({
-				title: "Risk Score",
-				titleAnchor: "center",
-				labelAngle: 0,
-			}),
-			vl.y().count().axis({ title: "Number of People" })
-		);
-
-	vl.layer(points, rectangles)
-		// rectangles
-		// .facet({ column: vl.field(key) })
-
-		.width(CHART_WIDTH)
-		.height(CHART_HEIGHT)
-		.render()
-		.then((viewElement) => {
-			const wrapper = document.createElement("div");
-			wrapper.classList.add("chartWrapper");
-			document.getElementById(id).appendChild(wrapper).appendChild(viewElement);
-		});
-}
-
 /* ########################### Helper Functions ########################## */
 function getValueOptions(data, key) {
 	// Don't bother processing and sorting bc we already know
@@ -925,19 +935,6 @@ function getValueOptions(data, key) {
 	data.map((obj) => optionsSet.add(obj[key]));
 	// Sort alphabetically
 	return [...optionsSet].sort();
-}
-
-// Source: https://stackoverflow.com/a/34579496
-function getJSONdata(callback) {
-	var rawFile = new XMLHttpRequest();
-	rawFile.overrideMimeType("application/json");
-	rawFile.open("GET", DATA_URL, true);
-	rawFile.onreadystatechange = function () {
-		if (rawFile.readyState === 4 && rawFile.status == "200") {
-			callback(JSON.parse(rawFile.responseText));
-		}
-	};
-	rawFile.send(null);
 }
 
 // Source: https://stackoverflow.com/a/11935263
