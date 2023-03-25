@@ -11,7 +11,11 @@
 
 		<!-- D3 -->
 		<script src="https://d3js.org/d3.v7.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/d3-dispatch/dist/d3-dispatch.min.js"
+			integrity="sha256-lLO722uY3BMloVdisFEBPoJTmZsOBDayfR2he5UroK8="
+			crossorigin="anonymous"
+		></script>
 		<script src="https://cdn.jsdelivr.net/npm/d3-quadtree@3"></script>
 		<script src="https://cdn.jsdelivr.net/npm/d3-timer@3"></script>
 		<script src="https://cdn.jsdelivr.net/npm/d3-force@3"></script>
@@ -43,7 +47,7 @@
 
 		<section>
 			<p>
-				Computers is taking over the world. And that's pretty cool, because
+				Computers are taking over the world. And that's pretty cool, because
 				machines are completely impartial, which means that they must be super
 				fair... right?
 			</p>
@@ -58,9 +62,9 @@
 			</p>
 
 			<p>
-				Algorithms is really complicated, so it's hard to tell when the computer
-				is being unfair. But we can look at the patterns produced and see if
-				there are any trends we don't like.
+				Algorithms are really complicated, so it's hard to tell when the
+				computer is being unfair. But we can look at the patterns produced and
+				see if there are any trends we don't like.
 			</p>
 
 			<p>Let's look at a real example.</p>
@@ -162,7 +166,7 @@
 			</p>
 
 			<p>
-				Let's take two people, Bob and Carina. Bob and Carina have identical
+				Let's take two people, Bob and Charles. Bob and Charles have identical
 				criminal records and are accused of committing the exact same crime. The
 				only difference between them is their race. If their race isn't taken
 				into account, then they should receive the same risk score. Let's see
@@ -194,7 +198,7 @@
 					<option value="race">Race</option>
 					<option value="sex">Sex</option>
 					<option value="name_begins_with_vowel">Name Begins With...</option>
-					<option value="charge_degree">Charge Degree</option>
+					<option value="charge_degree">Severity of Crime</option>
 					<option value="day_of_week">Born on a...</option>
 					<option value="age_cat">Age</option>
 				</select>
@@ -226,7 +230,7 @@
 		<section>
 			<p>
 				Mathematically speaking, groupings by characteristic should have roughly
-				the same distribution as the ungrouped whole,
+				the same risk distribution as the ungrouped whole,
 				<em
 					>unless the groups are based on a characteristic that affects the risk
 					score</em
@@ -239,28 +243,31 @@
 				recidivism, remember, is being measured here as being charged with a new
 				crime. The systemic racism of the American criminal justice system means
 				that Black individuals are charged with crimes at higher rates than
-				white individuals. Because the bias of who gets evaluated by the
-				algorithm,
+				white individuals. Because the algorithm only evaluates people who are
+				charged with a crime, and different groups are charged differently,
 				<strong
 					>even if the system is fair, we shouldn't expect to see matching
 					distributions of risk scores</strong
-				>. What's a better way to see if COMPAS is fair?
+				>.
 			</p>
 
+			<p>What's a better way to see if COMPAS is fair?</p>
+
 			<p>
-				Even if the specific outcomes are different for different groups, we can
-				look at how often the algorithm is right or wrong.
+				Even if the specific outcomes are different for each group, we can look
+				at how often the algorithm is right or wrong.
 				<strong
 					>We want risk scores to predict recidivism equally well for all
 					groups</strong
 				>. (This is called <span class="vocabWord">calibration</span>.) The
-				score are designed so that a 1 corresponds to 10% chance of
-				recidivating, at 2 to 20%, and so on.
+				scores are designed so that a 1 corresponds to 10% chance of
+				recidivating, a 2 to 20%, and so on.
 			</p>
 
 			<p>
-				In a fair system, if Daphne and Ed have the same risk score, they should
-				have the same likelihood of recidivating, no matter what their race is.
+				In a fair system, if Daphne and Edith have the same risk score, they
+				should have the same likelihood of recidivating, no matter what their
+				race is.
 			</p>
 
 			<div class="vizInstructions">
@@ -277,7 +284,7 @@
 					<option value="race">Race</option>
 					<option value="sex">Sex</option>
 					<option value="name_begins_with_vowel">Name Begins With...</option>
-					<option value="charge_degree">Charge Degree</option>
+					<option value="charge_degree">Severity of Crime</option>
 					<option value="day_of_week">Born on a...</option>
 					<option value="age_cat">Age</option>
 				</select>
@@ -309,6 +316,12 @@
 					Again, you can select a specific category to group by, and compare the
 					accuracy for different groups.
 				</p>
+
+				<p>
+					Here, the orange icons represent people who remain in jail, while the
+					grey icons represent those out on bail. The black border marks those
+					would who would recidivate.
+				</p>
 			</div>
 
 			<div class="container">
@@ -317,7 +330,7 @@
 					<option value="race">Race</option>
 					<option value="sex">Sex</option>
 					<option value="name_begins_with_vowel">Name Begins With...</option>
-					<option value="charge_degree">Charge Degree</option>
+					<option value="charge_degree">Severity of Crime</option>
 					<option value="day_of_week">Born on a...</option>
 					<option value="age_cat">Age</option>
 				</select>
@@ -341,12 +354,48 @@
 
 		<section>
 			<p>
-				We said earlier that race affects the risk score. On average, the risk
-				distribution for Black individuals is higher than that of white
-				individuals. As a result, Black individuals who wouldn't recidivate are
-				given a higher risk score than a white individual - so more Black
-				individuals are wrongly imprisoned.
+				We said earlier that race affects the risk score, even if COMPAS doesn't
+				know the race. On average, the risk distribution for Black individuals
+				is higher than that of white individuals. As a result, Black individuals
+				who wouldn't recidivate are given a higher risk score than a white
+				individual - so more Black individuals are wrongly imprisoned.
 			</p>
+
+			<div class="vizInstructions">
+				<p>
+					The purple bar below represents the threshold score: people with a
+					risk score above the threshold will stay in jail, while those with
+					risk scores below the threshold get out on bail.
+				</p>
+
+				<p>
+					Can you change the threshold so that the rates of unnecessary
+					imprisonment are the same across groups?
+				</p>
+
+				<p>
+					Again, the orange icons represent people who remain in jail, while the
+					grey icons represent those out on bail. The black border marks those
+					would who would recidivate.
+				</p>
+			</div>
+
+			<div class="container">
+				<select
+					name="inframarginalityConnectedSelect"
+					id="inframarginalityConnectedSelect"
+				>
+					<option value="all">All</option>
+					<option value="race">Race</option>
+					<option value="sex">Sex</option>
+					<option value="name_begins_with_vowel">Name Begins With...</option>
+					<option value="charge_degree">Severity of Crime</option>
+					<option value="day_of_week">Born on a...</option>
+					<option value="age_cat">Age</option>
+				</select>
+			</div>
+
+			<div class="container" id="inframarginalityConnected"></div>
 
 			<p>
 				Because the risk distributions are different for each group (which is
@@ -357,12 +406,23 @@
 				>.
 			</p>
 
-			<p>Linked lines on will go here!!!!!</p>
-
 			<p>
 				So what if we <em>don't</em> use the same threshold for all groups? Can
 				we equalize the kinds of errors?
 			</p>
+
+			<div class="vizInstructions">
+				<p>
+					The purple bar below represents the threshold score: people with a
+					risk score above the threshold will stay in jail, while those with
+					risk scores below the threshold get out on bail.
+				</p>
+
+				<p>
+					Can you change the thresholds individually for each group so that the
+					rates of unnecessary imprisonment are the same across groups?
+				</p>
+			</div>
 
 			<div class="container">
 				<select name="inframarginalitySelect" id="inframarginalitySelect">
@@ -370,7 +430,7 @@
 					<option value="race">Race</option>
 					<option value="sex">Sex</option>
 					<option value="name_begins_with_vowel">Name Begins With...</option>
-					<option value="charge_degree">Charge Degree</option>
+					<option value="charge_degree">Severity of Crime</option>
 					<option value="day_of_week">Born on a...</option>
 					<option value="age_cat">Age</option>
 				</select>
@@ -379,14 +439,15 @@
 			<div class="container" id="inframarginality"></div>
 
 			<p>
-				Cool, we can do that! But this doesn't seem very fair, either. Now we're
-				using protected characteristics (like race) to judge people, which seems
-				bad. (What if we don't consider race? That takes us back to
-				<a href="#anti_classification">anti-classification</a>...)
+				Cool, we can do that! But we're using protected characteristics (like
+				race) to judge people, which seems bad. (What if we don't consider race?
+				That takes us back to
+				<a href="#anti_classification">anti-classification</a>...) But this
+				doesn't seem very fair, either.
 				<strong
 					>We want to treat people with the same risk score in the same
 					way</strong
-				>: if Francis and and Georgia have the same risk score, they should both
+				>: if Frances and and Georgia have the same risk score, they should both
 				be released or both be jailed, even if they are of different races.
 				(Hey, isn't that <a href="#calibration">calibration</a>?)
 			</p>
@@ -410,7 +471,7 @@
 					fairness at the same time</strong
 				>. And this conflict happens in every kind of decision-making, human or
 				automated. It's a forced trade-off: we have to choose which criteria to
-				meet and which to give up on.
+				meet and which to give up.
 			</p>
 
 			<p>
@@ -467,8 +528,12 @@
 
 			<small
 				><em
-					><a href="https://thefirstquestion.github.io/"
-						>made with &lt;3 by Steven G. Opferman</a
+					>made with &lt;3 by
+					<a
+						href="https://thefirstquestion.github.io/"
+						target="_blank"
+						rel="noopener noreferrer"
+						>Steven G. Opferman</a
 					></em
 				></small
 			>

@@ -194,7 +194,9 @@ window.onload = () => {
 							.select("#inframarginality")
 							.append("svg")
 							.attr("width", "80%")
-							.attr("height", svgHeight)
+							.attr("height", svgHeight),
+						d3.dispatch("lineDragged"),
+						"lineDragged"
 					);
 				} else {
 					options.forEach((option) => {
@@ -208,13 +210,63 @@ window.onload = () => {
 							data.filter((d) => {
 								return d[key] === option;
 							}),
-							tmp
+							tmp,
+							d3.dispatch("lineDragged"),
+							"lineDragged"
 						);
 
 						tmp
 							.append("text")
 							.attr("x", 100)
-							.attr("y", 100)
+							.attr("y", 50)
+							.attr("font-size", "40px")
+							.text(option);
+					});
+				}
+			});
+
+		document
+			.getElementById("inframarginalityConnectedSelect")
+			.addEventListener("input", (e) => {
+				const key = e.target.value;
+				const options = getValueOptions(data, key);
+
+				// Remove existing charts
+				d3.select("#inframarginalityConnected").selectAll("svg").remove();
+				const dispatchConnected = d3.dispatch("connectedLineDragged");
+
+				if (key === "all") {
+					makeInframarginality(
+						data,
+						d3
+							.select("#inframarginalityConnected")
+							.append("svg")
+							.attr("width", "80%")
+							.attr("height", svgHeight),
+						dispatchConnected,
+						"connectedLineDragged"
+					);
+				} else {
+					options.forEach((option) => {
+						const tmp = d3
+							.select("#inframarginalityConnected")
+							.append("svg")
+							.attr("width", 90 / options.length + "%");
+						// Height will be same, to maintain aspect ratio (per css)
+
+						makeInframarginality(
+							data.filter((d) => {
+								return d[key] === option;
+							}),
+							tmp,
+							dispatchConnected,
+							"connectedLineDragged"
+						);
+
+						tmp
+							.append("text")
+							.attr("x", 100)
+							.attr("y", 50)
 							.attr("font-size", "40px")
 							.text(option);
 					});
@@ -243,11 +295,24 @@ window.onload = () => {
 				.select("#inframarginality")
 				.append("svg")
 				.attr("width", "80%")
-				.attr("height", svgHeight)
+				.attr("height", svgHeight),
+			d3.dispatch("lineDragged"),
+			"lineDragged"
+		);
+
+		/* ########################### Connected Inframarginality ########################## */
+		makeInframarginality(
+			data,
+			d3
+				.select("#inframarginalityConnected")
+				.append("svg")
+				.attr("width", "80%")
+				.attr("height", svgHeight),
+			d3.dispatch("connectedLineDragged"),
+			"connectedLineDragged"
 		);
 
 		/* ########################### Calibration ########################## */
-
 		initialCalibration(data);
 
 		// End of access to data
@@ -440,7 +505,7 @@ function initialCalibration(data) {
 }
 
 /* ########################### Inframarginality ########################## */
-function makeInframarginality(data, svg) {
+function makeInframarginality(data, svg, dispatch, eventName) {
 	const margin = 40;
 	const axisTitleSize = 30;
 	const tickLabelSize = 20;
@@ -508,6 +573,7 @@ function makeInframarginality(data, svg) {
 		.append("line")
 		.attr("y1", height - margin - tickLabelSize)
 		.attr("y2", 0)
+		.attr("class", eventName)
 		.attr("stroke", "purple")
 		.attr("stroke-width", 10)
 		.attr("opacity", 0.35)
@@ -518,14 +584,14 @@ function makeInframarginality(data, svg) {
 				.on("start", () => {
 					svg.attr("cursor", "col-resize");
 				})
-				.on("drag", (event, d) => {
+				.on("drag", function (event) {
 					// TODO: prevent from going past 0 / 11
 					// invert = from output of scale, get risk score
 					let currLineScore = xScale.invert(event.x);
 					// If we've moved far enough on the range, then react
 					if (Math.abs(currLineScore - cutoffScore) >= 0.5) {
 						cutoffScore = Math.round(currLineScore);
-						dispatch.call("lineDragged");
+						dispatch.call(eventName, this, cutoffScore);
 					}
 				})
 				.on("end", () => {
@@ -533,11 +599,7 @@ function makeInframarginality(data, svg) {
 				})
 		);
 
-	// Create an event
-	const dispatch = d3.dispatch("lineDragged");
-
 	// Add the people
-	// TODO: add something to indicate if recidivated or not
 	for (let i = 1; i <= 10; i++) {
 		svg
 			.selectAll("mycircle")
@@ -581,9 +643,11 @@ function makeInframarginality(data, svg) {
 		.attr("x", width / 2 + margin)
 		.attr("y", axisTitleSize * 2 + 2 * margin)
 		.attr("text-anchor", "middle")
+		.attr("fill", "orange")
 		.attr("font-size", axisTitleSize);
 
-	function lineHasMoved() {
+	// The dot allows multiple things to respond to eventName
+	dispatch.on(`${eventName}.${Date.now()}`, function (cutoffScore) {
 		// Line's x position
 		cutoffLine
 			.attr("x1", xScale(cutoffScore - 0.5) + margin)
@@ -610,10 +674,9 @@ function makeInframarginality(data, svg) {
 				Math.round((numJailedInnocent / numJailed) * 100) || 0
 			}%`
 		);
-	}
+	});
 
-	lineHasMoved();
-	dispatch.on("lineDragged", lineHasMoved);
+	dispatch.call(eventName, this, cutoffScore);
 }
 
 //* ########################### Confusion Matrix ########################## */
