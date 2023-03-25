@@ -2,7 +2,7 @@
 const DATA_URL =
 	"https://raw.githubusercontent.com/TheFirstQuestion/algorithmic-fairness-explorable-explanation/main/data/propublica-two-years.json";
 // TODO: pick a good sample size
-const SAMPLE_SIZE = 1000;
+const SAMPLE_SIZE = 2000;
 const MIN_SUBSAMPLE_SIZE = 75;
 const CHART_WIDTH = window.screen.width / 3 - 200;
 const CHART_HEIGHT = (window.screen.height - 300) / 2;
@@ -91,50 +91,6 @@ window.onload = () => {
 
 		// Sample the data
 		const data = getRandomSubarray(ogData, SAMPLE_SIZE);
-
-		// Anti-Classification
-		document
-			.getElementById("antiClassification2select")
-			.addEventListener("input", (e) => {
-				const key = e.target.value;
-				const options = getValueOptions(data, key);
-
-				// Remove existing charts
-				d3.select("#antiClassification2").selectAll("svg").remove();
-
-				if (key === "all") {
-					makeAntiClassification(
-						data,
-						d3
-							.select("#antiClassification2")
-							.append("svg")
-							.attr("width", "80%")
-							.attr("height", svgHeight)
-					);
-				} else {
-					options.forEach((option) => {
-						const tmp = d3
-							.select("#antiClassification2")
-							.append("svg")
-							.attr("width", 90 / options.length + "%");
-						// Height will be same, to maintain aspect ratio (per css)
-
-						const thisData = data.filter((d) => {
-							return d[key] === option;
-						});
-
-						if (thisData.length > MIN_SUBSAMPLE_SIZE) {
-							makeAntiClassification(thisData, tmp);
-							tmp
-								.append("text")
-								.attr("x", 100)
-								.attr("y", 50)
-								.attr("font-size", "40px")
-								.text(option);
-						}
-					});
-				}
-			});
 
 		/* ########################### Confusion Matrix ########################## */
 		document
@@ -263,17 +219,17 @@ window.onload = () => {
 					);
 				} else {
 					options.forEach((option) => {
-						const tmp = d3
-							.select("#inframarginalityConnected")
-							.append("svg")
-							.attr("width", 90 / options.length + "%");
-						// Height will be same, to maintain aspect ratio (per css)
-
 						let thisData = data.filter((d) => {
 							return d[key] === option;
 						});
 
 						if (thisData.length > MIN_SUBSAMPLE_SIZE) {
+							const tmp = d3
+								.select("#inframarginalityConnected")
+								.append("svg")
+								.attr("width", 90 / options.length + "%");
+							// Height will be same, to maintain aspect ratio (per css)
+
 							makeInframarginality(
 								thisData,
 								tmp,
@@ -295,16 +251,59 @@ window.onload = () => {
 		/* ########################### Anti-Classification ########################## */
 		// Make initial graphs
 		// TODO: add line of best fit to this
-		// riskScoreFrequency(data, "antiClassification1");
 
 		makeAntiClassification(
 			data,
 			d3
-				.select("#antiClassification1")
+				.select("#antiClassification")
 				.append("svg")
 				.attr("width", "80%")
 				.attr("height", svgHeight)
 		);
+
+		// Anti-Classification
+		document
+			.getElementById("antiClassificationSelect")
+			.addEventListener("input", (e) => {
+				const key = e.target.value;
+				const options = getValueOptions(data, key);
+
+				// Remove existing charts
+				d3.select("#antiClassification").selectAll("svg").remove();
+
+				if (key === "all") {
+					makeAntiClassification(
+						data,
+						d3
+							.select("#antiClassification")
+							.append("svg")
+							.attr("width", "80%")
+							.attr("height", svgHeight)
+					);
+				} else {
+					options.forEach((option) => {
+						const thisData = data.filter((d) => {
+							return d[key] === option;
+						});
+
+						if (thisData.length > MIN_SUBSAMPLE_SIZE) {
+							const tmp = d3
+								.select("#antiClassification")
+								.append("svg")
+								.attr("width", 90 / options.length + "%");
+							// Height will be same, to maintain aspect ratio (per css)
+
+							makeAntiClassification(thisData, tmp);
+							tmp
+								.append("text")
+								.attr("x", 100)
+								.attr("y", 50)
+								.attr("font-size", "40px")
+								.text(option);
+						}
+					});
+				}
+			});
 
 		/* ########################### Confusion Matrix ########################## */
 		clusterDots(
@@ -423,7 +422,7 @@ function makeAntiClassification(data, svg) {
 			)
 			.join("circle")
 			.attr("r", widthOfDot / 2)
-			.attr("stroke-width", 1)
+			.attr("stroke-width", 2)
 			// TODO: make sure these line up with axis... make them taller than wide?
 			.attr("transform", (d, j) => {
 				return `translate(${
@@ -528,8 +527,6 @@ function initialCalibration(data) {
 	function makePercentDots(data, color) {
 		// Add the people
 		const thisGroup = svg.append("g").attr("class", "dotLayer");
-		// TODO: fix this (and use colors)
-		thisGroup.append("text").attr("x", 200).attr("y", 200).attr("text", "ACK");
 
 		// via https://stackoverflow.com/a/65745675
 		const dataMap = d3.rollup(
@@ -702,7 +699,7 @@ function makeInframarginality(data, svg, dispatch, eventName) {
 	const cutoffLine = svg
 		.append("line")
 		.attr("y1", height - margin - tickLabelSize)
-		.attr("y2", 0)
+		.attr("y2", axisTitleSize * 2 + 3 * margin)
 		.attr("class", eventName)
 		.attr("stroke", "purple")
 		.attr("stroke-width", 10)
@@ -743,7 +740,7 @@ function makeInframarginality(data, svg, dispatch, eventName) {
 			.attr("stroke", (d) => {
 				return d.did_recidivate ? "black" : "transparent";
 			})
-			.attr("stroke-width", 1)
+			.attr("stroke-width", 2)
 			// TODO: make sure these line up with axis... make them taller than wide?
 			.attr("transform", (d, j) => {
 				return `translate(${
@@ -899,6 +896,7 @@ function clusterDots(data, svg) {
 						.attr("transform", `translate(${width / 2},${height / 2})`)
 				);
 			})
+			.attr("stroke-width", 3)
 			// Orange = predicted to recidivate
 			.attr("fill", (d) => {
 				if (d.jail_recommended) {
