@@ -6,15 +6,14 @@
 #   https://github.com/kylelobo/The-Documentation-Compendium/
 -->
 
-<!--
-<p align="center">
-  <a href="" rel="noopener">
- <img width=200px height=200px src="https://i.imgur.com/6wj0hh6.jpg" alt="Project logo"></a>
-</p>
--->
-
 <h1 align="center">Algorithmic Fairness: An Explorable Explanation</h1>
 <div id="top"></div>
+
+<p align="center">
+  <a href="https://thefirstquestion.github.io/algorithmic-fairness-explorable-explanation/" target="_blank"
+      rel="noopener noreferrer">
+ <img src="./.github/screenshot.png" alt="Project logo"></a>
+</p>
 
 <p align="center">
 An interactive visual explanation of mathematical definitions of fairness, using the COMPAS algorithm as a case study.
@@ -24,7 +23,7 @@ An interactive visual explanation of mathematical definitions of fairness, using
 ## Table of Contents
 
 - [About](#about)
-- [How It's Made](#how_its_made)
+- [Data and Methods](#data_and_methods)
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 
@@ -34,9 +33,9 @@ Machine learning models are becoming increasingly prevalent, but are really hard
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-## How It's Made <a name="how_its_made"></a>
+## Data and Methods <a name="data_and_methods"></a>
 
-I'll fill this in after I've made the thing!
+This explorable explanation visualizes [ProPublica's COMPAS data](https://github.com/propublica/compas-analysis/blob/master/compas-scores-two-years.csv) using [D3.js](https://d3js.org/). I converted the CSV to JSON using [csvjson.com](https://csvjson.com/csv2json), and perform minor data cleaning after loading the data (renaming and [one-hot encoding](https://en.wikipedia.org/wiki/One-hot)).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -52,16 +51,11 @@ Feel free to do any of the following:
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-## Sources
-
-- [ProPublica's article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing), [methodology write-up](https://www.propublica.org/article/how-we-analyzed-the-compas-recidivism-algorithm), and [GitHub](https://github.com/propublica/compas-analysis)
-- [MIT Technology Review's visualization](https://www.technologyreview.com/2019/10/17/75285/ai-fairer-than-judge-criminal-risk-assessment-algorithm/)
-
 ## Acknowledgements <a name="acknowledgements"></a>
 
+- [ProPublica's article](https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing), [methodology write-up](https://www.propublica.org/article/how-we-analyzed-the-compas-recidivism-algorithm), and [GitHub](https://github.com/propublica/compas-analysis)
 - Content is adapted from [Stanford's CS 182: Ethics, Public Policy, and Technological Change](https://web.stanford.edu/class/cs182/)
-- Inspired by [Nicky Case](https://ncase.me/)
+- Inspired by [Nicky Case](https://ncase.me/) and [MIT Technology Review's visualization](https://www.technologyreview.com/2019/10/17/75285/ai-fairer-than-judge-criminal-risk-assessment-algorithm/)
 - Created for [Stanford's CS 448B: Data Visualization](https://cs448b.subramonyam.com/), Winter 2023
-- The original data was in CSV format and was converted to JSON using [Flatfile's csvjson.com](https://csvjson.com/csv2json)
 
 <p align="right">(<a href="#top">back to top</a>)</p>

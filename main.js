@@ -2,7 +2,7 @@
 const DATA_URL =
 	"https://raw.githubusercontent.com/TheFirstQuestion/algorithmic-fairness-explorable-explanation/main/data/propublica-two-years.json";
 // TODO: pick a good sample size
-const SAMPLE_SIZE = 2000;
+const SAMPLE_SIZE = 1200;
 const MIN_SUBSAMPLE_SIZE = 75;
 const CHART_WIDTH = window.screen.width / 3 - 200;
 const CHART_HEIGHT = (window.screen.height - 300) / 2;
@@ -113,7 +113,6 @@ window.onload = () => {
 					);
 				} else {
 					options.forEach((option) => {
-						// We'll resample here
 						const thisSubset = ogData.filter((d) => {
 							return d[key] === option;
 						});
